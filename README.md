@@ -1,4 +1,4 @@
-# se2_tigersafe
+# UST TigerSafe App
 
 A Campus Emergency Response Application Project
 
