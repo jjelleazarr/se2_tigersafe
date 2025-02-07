@@ -19,14 +19,10 @@ samples, guidance on mobile development, and a full API reference.
 
 All dart files are provided on the /lib folder. 
 
-For the front-end, /views folder will be utilized. 
+For the front-end, /screens folder will be utilized. 
 
 For the back-end, /models and /controllers will be utilized.
 
 - /models -> Firebase database access and Dart classes to represent the data. 
-- /views -> UI widgets go here.
+- /screens -> For mobile and web UI development.
 - /controllers -> Refer to pseudocode in SDD.
-
-This project is cross-platform capable. No need to separate files for each user.
-
-Use conditional statements for determining the user in each dart files.
