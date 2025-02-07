@@ -21,13 +21,12 @@ All dart files are provided on the /lib folder.
 
 For the front-end, /views folder will be utilized. 
 
-For the back-end, /controllers, /models, /services, and /utilities will be utilized.
+For the back-end, /models and /controllers will be utilized.
 
-- /models -> Dart classes to represent the data. 
+- /models -> Firebase database access and Dart classes to represent the data. 
 - /views -> UI widgets go here.
 - /controllers -> Refer to pseudocode in SDD.
-- /services -> Firebase database access go here and other external interactions.
-- /utilities -> For helper functions, constants, or extensions.
+- /core -> Firebase database connection go here.
 
 This project is cross-platform capable. No need to separate files for each user.
 
