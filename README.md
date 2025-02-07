@@ -26,7 +26,6 @@ For the back-end, /models and /controllers will be utilized.
 - /models -> Firebase database access and Dart classes to represent the data. 
 - /views -> UI widgets go here.
 - /controllers -> Refer to pseudocode in SDD.
-- /core -> Firebase database connection go here.
 
 This project is cross-platform capable. No need to separate files for each user.
 
