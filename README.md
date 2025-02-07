@@ -24,9 +24,5 @@ For the front-end, /views folder will be utilized.
 For the back-end, /models and /controllers will be utilized.
 
 - /models -> Firebase database access and Dart classes to represent the data. 
-- /views -> UI widgets go here.
+- /views -> For mobile and website UI development.
 - /controllers -> Refer to pseudocode in SDD.
-
-This project is cross-platform capable. No need to separate files for each user.
-
-Use conditional statements for determining the user in each dart files.
