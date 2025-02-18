@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-class DashboardDrawerLeft extends StatelessWidget {
-  const DashboardDrawerLeft({super.key, required this.onSelectScreen});
+class DashboardDrawerRight extends StatelessWidget {
+  const DashboardDrawerRight({super.key, required this.onSelectScreen});
 
-  final void Function(String identifier) onSelectScreen;
+  final void Function(String identifier) onSelectScreen; //Needs to change to be different from the left?
 
   @override
   Widget build(context){

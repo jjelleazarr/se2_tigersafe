@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:se2_tigersafe/widgets_style.dart';
+import 'package:se2_tigersafe/widgets/widgets_style.dart';
 
 class MobileLoginScreen extends StatefulWidget {
   const MobileLoginScreen({super.key});
@@ -30,7 +30,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppBar( //put this in another class since so many will use it 
         title: SizedBox(
           height: kToolbarHeight,
           child: Center(child: Image.asset('assets/UST_LOGO_NO_TEXT_300.png')),
