@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
 import 'core/firebase_options.dart';
 import 'screens/mobile/login_screen.dart';
 import 'screens/web/login_screen.dart';
@@ -40,7 +41,7 @@ class MyApp extends StatelessWidget {
     //if (kIsWeb) {
       //return const WebLoginScreen();
     //} else {
-      return const MobileLoginScreen();
+      return DashboardScreen();
     }
   }
 //}
