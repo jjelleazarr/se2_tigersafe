@@ -20,47 +20,19 @@ class DashboardDrawerRight extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  Icons.account_circle,
+                  Icons.notifications,
                   size: 48,
                   color: Colors.white,
                 ),
                 const SizedBox(width: 18),
                 Text(
-                  'Max Verstappen',
+                  'Notifications',
                   style: Theme.of(context).textTheme.titleLarge!.copyWith(
                         color: Colors.white,
                       ),
                 ),
               ],
             ),
-          ),
-          ListTile(
-            leading: Icon(Icons.account_box,
-                size: 26, color: Colors.white),
-            title: Text(
-              'Accounts',
-              style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                    color: Colors.white,
-                    fontSize: 24,
-                  ),
-            ),
-            onTap: () {
-              onSelectScreen('meals');
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.settings,
-                size: 26, color: Colors.white),
-            title: Text(
-              'Settings',
-              style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                    color: Colors.white,
-                    fontSize: 24,
-                  ),
-            ),
-            onTap: () {
-              onSelectScreen('meals');
-            },
           ),
         ],
       ),

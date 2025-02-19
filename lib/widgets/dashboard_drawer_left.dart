@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
 
 class DashboardDrawerLeft extends StatelessWidget {
   const DashboardDrawerLeft({super.key, required this.onSelectScreen});
@@ -6,20 +7,19 @@ class DashboardDrawerLeft extends StatelessWidget {
   final void Function(String identifier) onSelectScreen;
 
   @override
-  Widget build(context){
-    return
-    Drawer(
+  Widget build(context) {
+    return Drawer(
       backgroundColor: Colors.black,
       child: Column(
         children: [
           DrawerHeader(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.black, 
+            decoration: const BoxDecoration(
+              color: Colors.black,
             ),
             child: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.account_circle,
                   size: 48,
                   color: Colors.white,
@@ -35,31 +35,46 @@ class DashboardDrawerLeft extends StatelessWidget {
             ),
           ),
           ListTile(
-            leading: Icon(Icons.account_box,
-                size: 26, color: Colors.white),
+            leading:
+                const Icon(Icons.account_box, size: 26, color: Colors.white),
             title: Text(
-              'Accounts',
+              'My Account',
               style: Theme.of(context).textTheme.titleSmall!.copyWith(
                     color: Colors.white,
                     fontSize: 24,
                   ),
             ),
             onTap: () {
-              onSelectScreen('meals');
+              onSelectScreen('account');
             },
           ),
           ListTile(
-            leading: Icon(Icons.settings,
-                size: 26, color: Colors.white),
+            leading:
+                const Icon(Icons.assignment, size: 26, color: Colors.white),
             title: Text(
-              'Settings',
+              'Your Reports',
               style: Theme.of(context).textTheme.titleSmall!.copyWith(
                     color: Colors.white,
                     fontSize: 24,
                   ),
             ),
             onTap: () {
-              onSelectScreen('meals');
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (ctx) => const ReportsListScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout, size: 26, color: Colors.white),
+            title: Text(
+              'Logout',
+              style: Theme.of(context).textTheme.titleSmall!.copyWith(
+                    color: Colors.white,
+                    fontSize: 24,
+                  ),
+            ),
+            onTap: () {
+              onSelectScreen('logout');
             },
           ),
         ],

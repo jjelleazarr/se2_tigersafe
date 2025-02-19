@@ -8,7 +8,7 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       title: SizedBox(
         height: kToolbarHeight,
-        child: Center(child: Image.asset('assets/UST_LOGO_NO_TEXT_300.png')),
+        child: Center(child: Image.asset('assets/UST_LOGO_NO_TEXT.png')),
       ),
       backgroundColor: Colors.black,
     );
