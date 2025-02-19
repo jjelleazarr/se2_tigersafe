@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'users_controller.dart' // updated import
 
 class LoginController{
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -23,7 +24,7 @@ class LoginController{
       
       if (user != null) {
         if (user.email!.endsWith("@ust.edu.ph")) {
-          final userDoc = await _firestore.collection('user_id').doc(user.uid).get();
+          final userDoc = getUser('users'); // updated getters
 
           if (userDoc.exists) {
             print("User exists, navigating to homepage");
@@ -81,7 +82,7 @@ class LoginController{
 
   Future<void> profileSetup(String userId, Map<String, dynamic> userDetails, context) async {
     try {
-      await _firestore.collection('user_id').doc(userId).set(userDetails);
+      updateUser(userDetails); // updated setters
       print("Profile setup completed");
       Navigator.pushNamed(context, '/dashboard.dart');
     } catch (e) {
@@ -94,7 +95,7 @@ class LoginController{
       try {
         await _firestore.collection('user_id').doc(userId).update({'accountStatus': 'locked'});
         print("Account locked");
-        DocumentSnapshot userDoc = await _firestore.collection('user_id').doc(userId).get();
+        DocumentSnapshot userDoc = getUser('users');
         String userEmail = userDoc['email'];
         await FirebaseAuth.instance.sendPasswordResetEmail(email: userEmail);
         print("Password reset email sent!");
