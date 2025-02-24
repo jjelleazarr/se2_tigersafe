@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/widgets/widgets_style.dart';
+import 'package:se2_tigersafe/controllers/login_controller.dart';
 
 class MobileLoginScreen extends StatefulWidget {
   const MobileLoginScreen({super.key});
@@ -12,6 +13,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _identificationController = TextEditingController();
   final _passwordController = TextEditingController();
+  final LoginController _loginController = LoginController();
 
   @override
   void dispose() {
@@ -22,7 +24,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
 
   void _login() {
     if (_formKey.currentState!.validate()) {
-      // Handle login logic
+      _loginController.loginWithUsernamePassword(_identificationController.text, _passwordController.text, context);
       print("ID: ${_identificationController.text}, Password: ${_passwordController.text}");
     }
   }

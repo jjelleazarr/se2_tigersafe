@@ -4,8 +4,7 @@ import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
 import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
 import 'core/firebase_options.dart';
 import 'screens/mobile/login_screen.dart';
-import 'screens/web/login_screen.dart';
-import 'dart:io' show Platform;
+// import 'screens/web/login_screen.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_fonts/google_fonts.dart';
 
@@ -42,7 +41,7 @@ class MyApp extends StatelessWidget {
     //if (kIsWeb) {
       //return const WebLoginScreen();
     //} else {
-      return DashboardScreen();
+      return MobileLoginScreen();
     }
   }
 //}

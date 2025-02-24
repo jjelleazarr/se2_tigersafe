@@ -2,12 +2,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'users_controller.dart' // updated import
+import 'package:se2_tigersafe/controllers/users_controller.dart';
 
 class LoginController{
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final UserController _userController = UserController();
 
   Future<UserCredential?> loginWithGoogle(BuildContext? context) async{
     try {
@@ -24,9 +25,9 @@ class LoginController{
       
       if (user != null) {
         if (user.email!.endsWith("@ust.edu.ph")) {
-          final userDoc = getUser('users'); // updated getters
+          final userDoc = await _userController.getUser('users');
 
-          if (userDoc.exists) {
+          if (userDoc != null) {
             print("User exists, navigating to homepage");
             Navigator.pushNamed(context!, '/dashboard.dart');
             return userCredential;
@@ -82,7 +83,7 @@ class LoginController{
 
   Future<void> profileSetup(String userId, Map<String, dynamic> userDetails, context) async {
     try {
-      updateUser(userDetails); // updated setters
+      _userController.updateUser(userId, userDetails);
       print("Profile setup completed");
       Navigator.pushNamed(context, '/dashboard.dart');
     } catch (e) {
@@ -93,12 +94,9 @@ class LoginController{
   Future<void> accountLocking(String userId, int failedAttempts) async {
     if(failedAttempts > 3) {
       try {
-        await _firestore.collection('user_id').doc(userId).update({'accountStatus': 'locked'});
-        print("Account locked");
-        DocumentSnapshot userDoc = getUser('users');
-        String userEmail = userDoc['email'];
-        await FirebaseAuth.instance.sendPasswordResetEmail(email: userEmail);
-        print("Password reset email sent!");
+        await _firestore.collection('users').doc(userId).update({'accountStatus': 'locked'}); // Account locked
+        final userDoc = await _userController.getUser(userId);
+        await FirebaseAuth.instance.sendPasswordResetEmail(email: userDoc!.email); // Password reset email sent
       } catch (e) {
         print("Error locking account: $e");
       }
