@@ -1,4 +1,4 @@
-import 'package:/flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
 import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
@@ -33,15 +33,12 @@ class MyApp extends StatelessWidget {
         useMaterial3: true, //no need for this, this is already default
         textTheme: GoogleFonts.robotoTextTheme(),
       ),
-      home: getInitialScreen(),
+      initialRoute: '/', // This is for mobile
+      routes: {
+        '/': (context) => MobileLoginScreen(), // Default screen
+        '/dashboard': (context) => DashboardScreen(), // Ensure this screen exists
+      },
     );
   }
-
-  Widget getInitialScreen() {
-    //if (kIsWeb) {
-      //return const WebLoginScreen();
-    //} else {
-      return MobileLoginScreen();
-    }
-  }
+}
 //}
