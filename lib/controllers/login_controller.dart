@@ -3,6 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/controllers/users_controller.dart';
+import 'package:se2_tigersafe/models/users_collection.dart';
 
 class LoginController{
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -57,17 +58,22 @@ class LoginController{
   }
 
   Future<UserCredential?> loginWithUsernamePassword(String username, String password, BuildContext? context) async {
+    int failedAttempts = 0;
+
     try {
       final userCredential = await _auth.signInWithEmailAndPassword(email: "$username@ust.edu.ph", password: password);
         return userCredential;
-    } on FirebaseAuthException catch (e) {
+    }
+    on FirebaseAuthException catch (e) {
       String errorMessage = "";
       switch (e.code) {
         case 'user-not-found':
           errorMessage = 'No user found for that email.';
+          failedAttempts++;
           break;
         case 'wrong-password':
           errorMessage = 'Wrong password provided for that user.';
+          failedAttempts++;
           break;
         default:
           errorMessage = 'An error occured: ${e.message}';
@@ -77,6 +83,12 @@ class LoginController{
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)),);
       }
       print("Error during username/password login: $e");
+      if (e.code == 'wrong-password' || e.code == 'user-not-found') {
+        final userDoc = await _userController.getUser(username);
+        if (userDoc!.email.isNotEmpty) {
+          await accountLocking(userDoc.userId, failedAttempts);
+        }
+      }
       return null;
     }
   }
@@ -95,8 +107,10 @@ class LoginController{
     if(failedAttempts > 3) {
       try {
         await _firestore.collection('users').doc(userId).update({'accountStatus': 'locked'}); // Account locked
+        print("Account locked.");
         final userDoc = await _userController.getUser(userId);
         await FirebaseAuth.instance.sendPasswordResetEmail(email: userDoc!.email); // Password reset email sent
+        print("Password reset email sent.");
       } catch (e) {
         print("Error locking account: $e");
       }

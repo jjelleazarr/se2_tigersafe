@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/widgets/widgets_style.dart';
 import 'package:se2_tigersafe/controllers/login_controller.dart';
+import 'package:se2_tigersafe/controllers/users_controller.dart';
 
 class MobileLoginScreen extends StatefulWidget {
   const MobileLoginScreen({super.key});
@@ -14,6 +16,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
   final _identificationController = TextEditingController();
   final _passwordController = TextEditingController();
   final LoginController _loginController = LoginController();
+  final UserController _userController = UserController();
 
   @override
   void dispose() {
@@ -22,10 +25,69 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
     super.dispose();
   }
 
-  void _login() {
+  void _login() async {
     if (_formKey.currentState!.validate()) {
-      _loginController.loginWithUsernamePassword(_identificationController.text, _passwordController.text, context);
-      print("ID: ${_identificationController.text}, Password: ${_passwordController.text}");
+      String username = _identificationController.text;
+      String password = _passwordController.text;
+      print("ID: $username, Password: $password");
+
+      try {
+        UserCredential? userCredential = await _loginController.loginWithUsernamePassword(username, password, context);
+
+        if (userCredential != null) {
+          // Login successful
+          print("Login Successful: ${userCredential.user?.uid}");
+          // Navigate to the next screen
+          Navigator.pushReplacementNamed(context, '/dashboard.dart');
+        }
+        else {
+          // Login failed
+          print("Login Failed");
+        }
+      }
+      catch (e){
+        // Handle any unexpected errors
+        print("Error during login: $e");
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("An unexpected error occured.")),);
+      }
+    }
+  }
+
+  void _googleSignIn() async {
+    try {
+      UserCredential? userCredential = await _loginController.loginWithGoogle(
+          context);
+
+      if (userCredential != null) {
+        // Google Sign-in successful
+        print("Google Sign-in Successful: ${userCredential.user?.uid}");
+
+        // Check if the user profile exists, if not, navigate to profile setup
+        final userDoc = await _userController.getUser('users');
+        if (userDoc == null) {
+          // Navigate to profile setup, and pass the user id
+          Navigator.pushNamed(context, '/edit_profile.dart', arguments: userCredential.user!.uid).then((value) {
+            // After returning from edit profile, navigate to the dashboard
+            if (value != null && value == true) {
+              Navigator.pushReplacementNamed(context, '/dashboard.dart');
+            }
+          });
+        }
+        else {
+          // Navigate to the next screen
+          Navigator.pushReplacementNamed(context, '/dashboard.dart');
+        }
+      }
+      else {
+        // Google Sign-in failed
+        print("Google Sign-in Failed");
+      }
+    }
+    catch (e) {
+      // Handle any unexpected errors
+      print("Error during Google Sign-in: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("An unexpected error occured.")),);
     }
   }
 
