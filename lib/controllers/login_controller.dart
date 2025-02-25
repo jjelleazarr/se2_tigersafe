@@ -61,7 +61,7 @@ class LoginController{
     int failedAttempts = 0;
 
     try {
-      final userCredential = await _auth.signInWithEmailAndPassword(email: "$username@ust.edu.ph", password: password);
+      final userCredential = await _auth.signInWithEmailAndPassword(email: username, password: password);
         return userCredential;
     }
     on FirebaseAuthException catch (e) {
