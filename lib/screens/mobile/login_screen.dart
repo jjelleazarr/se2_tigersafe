@@ -185,13 +185,13 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
                     'OR',
                   ),
                   Center(
-                    child: ElevatedButton(
-                      onPressed: _login,
-                      style: ElevatedButton.styleFrom(
+                    child: OutlinedButton(
+                      onPressed: _googleSignIn,
+                      style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                         textStyle: const TextStyle(fontSize: 16),
                       ),
-                      child: const Text("Login"), //FOR GOOGLE AUTHENTICATION
+                      child: const Text("Login with Google"), //FOR GOOGLE AUTHENTICATION
                     ),
                   ),
                 ],
