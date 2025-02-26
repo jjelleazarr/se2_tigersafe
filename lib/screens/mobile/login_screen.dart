@@ -38,7 +38,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
           // Login successful
           print("Login Successful: ${userCredential.user?.uid}");
           // Navigate to the next screen
-          Navigator.pushReplacementNamed(context, '/dashboard.dart');
+          Navigator.pushReplacementNamed(context, '/dashboard');
         }
         else {
           // Login failed
@@ -63,19 +63,19 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
         print("Google Sign-in Successful: ${userCredential.user?.uid}");
 
         // Check if the user profile exists, if not, navigate to profile setup
-        final userDoc = await _userController.getUser('users');
+        final userDoc = await _userController.getUser(userCredential.user!.uid);
         if (userDoc == null) {
           // Navigate to profile setup, and pass the user id
           Navigator.pushNamed(context, '/edit_profile.dart', arguments: userCredential.user!.uid).then((value) {
             // After returning from edit profile, navigate to the dashboard
             if (value != null && value == true) {
-              Navigator.pushReplacementNamed(context, '/dashboard.dart');
+              Navigator.pushReplacementNamed(context, '/dashboard');
             }
           });
         }
         else {
           // Navigate to the next screen
-          Navigator.pushReplacementNamed(context, '/dashboard.dart');
+          Navigator.pushReplacementNamed(context, '/dashboard');
         }
       }
       else {
