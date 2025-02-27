@@ -12,7 +12,20 @@
           "package_name": "com.simplesys.se2_tigersafe"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "135221844856-baj1k3htbq1ht5l1ndhmmvdit2nludd3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.simplesys.se2_tigersafe",
+            "certificate_hash": "4a519d0bf735817d1c6c3c097ca0fe72eea5bbce"
+          }
+        },
+        {
+          "client_id": "135221844856-co9gblt5pg9fb4mcgi6ge7rvjugrubnu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAZwpplCjcLReEDnwQGOA0Nruw9WqzPzJ8"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "135221844856-co9gblt5pg9fb4mcgi6ge7rvjugrubnu.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "135221844856-jpndg72v17t769e1ndgreudnvfo4q1q8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.simplesys.se2Tigersafe"
+              }
+            }
+          ]
         }
       }
     }

@@ -13,7 +13,11 @@ class LoginController{
 
   Future<UserCredential?> loginWithGoogle(BuildContext? context) async{
     try {
+      print("Google Sign-In Started...");
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      print("Google User: ${googleUser?.email}");
+
       final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
       
       final credential = GoogleAuthProvider.credential(
@@ -23,10 +27,11 @@ class LoginController{
       
       final UserCredential userCredential = await _auth.signInWithCredential(credential);
       final User? user = userCredential.user;
+      print("✅ Firebase User ID: ${user?.uid}");
       
       if (user != null) {
         if (user.email!.endsWith("@ust.edu.ph")) {
-          final userDoc = await _userController.getUser('users');
+          final userDoc = await _userController.getUser(user.uid);
 
           if (userDoc != null) {
             print("User exists, navigating to homepage");
