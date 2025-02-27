@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/widgets/widgets_style.dart';
 import 'package:se2_tigersafe/controllers/login_controller.dart';
 import 'package:se2_tigersafe/controllers/users_controller.dart';
+import 'package:sign_in_button/sign_in_button.dart';
 
 class MobileLoginScreen extends StatefulWidget {
   const MobileLoginScreen({super.key});
@@ -32,31 +33,32 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
       print("ID: $username, Password: $password");
 
       try {
-        UserCredential? userCredential = await _loginController.loginWithUsernamePassword(username, password, context);
+        UserCredential? userCredential = await _loginController
+            .loginWithUsernamePassword(username, password, context);
 
         if (userCredential != null) {
           // Login successful
           print("Login Successful: ${userCredential.user?.uid}");
           // Navigate to the next screen
           Navigator.pushReplacementNamed(context, '/dashboard');
-        }
-        else {
+        } else {
           // Login failed
           print("Login Failed");
         }
-      }
-      catch (e){
+      } catch (e) {
         // Handle any unexpected errors
         print("Error during login: $e");
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("An unexpected error occured.")),);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("An unexpected error occured.")),
+        );
       }
     }
   }
 
   void _googleSignIn() async {
     try {
-      UserCredential? userCredential = await _loginController.loginWithGoogle(
-          context);
+      UserCredential? userCredential =
+          await _loginController.loginWithGoogle(context);
 
       if (userCredential != null) {
         // Google Sign-in successful
@@ -66,35 +68,36 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
         final userDoc = await _userController.getUser(userCredential.user!.uid);
         if (userDoc == null) {
           // Navigate to profile setup, and pass the user id
-          Navigator.pushNamed(context, '/edit_profile.dart', arguments: userCredential.user!.uid).then((value) {
+          Navigator.pushNamed(context, '/edit_profile.dart',
+                  arguments: userCredential.user!.uid)
+              .then((value) {
             // After returning from edit profile, navigate to the dashboard
             if (value != null && value == true) {
               Navigator.pushReplacementNamed(context, '/dashboard');
             }
           });
-        }
-        else {
+        } else {
           // Navigate to the next screen
           Navigator.pushReplacementNamed(context, '/dashboard');
         }
-      }
-      else {
+      } else {
         // Google Sign-in failed
         print("Google Sign-in Failed");
       }
-    }
-    catch (e) {
+    } catch (e) {
       // Handle any unexpected errors
       print("Error during Google Sign-in: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("An unexpected error occured.")),);
+        SnackBar(content: Text("An unexpected error occured.")),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar( //put this in another class since so many will use it 
+      appBar: AppBar(
+        //put this in another class since so many will use it
         title: SizedBox(
           height: kToolbarHeight,
           child: Center(child: Image.asset('assets/UST_LOGO_NO_TEXT_300.png')),
@@ -104,7 +107,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
             child: Form(
               key: _formKey,
               child: Column(
@@ -115,8 +119,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
                   ),
                   const SizedBox(height: 40),
                   AppWidgets.loginTextContainer(
-                    'To access TigerSafe, please make sure you meet the following requirements:'
-                  ),
+                      'To access TigerSafe, please make sure you meet the following requirements:'),
                   const SizedBox(height: 10),
                   AppWidgets.loginTextContainer(
                     '1. UST Google Workspace Personal Account',
@@ -170,28 +173,57 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
                   const SizedBox(height: 30),
 
                   // Login Button
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: _login,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                        textStyle: const TextStyle(fontSize: 16),
+                    Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      OutlinedButton(
+                      onPressed: _login, //Need to route to AccountCreateScreen
+                      style: OutlinedButton.styleFrom(
+                      fixedSize: const Size(170, 15), // Set width and height
+                      textStyle:
+                        const TextStyle(fontSize: 16, color: Colors.blue),
+                      shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.zero,
                       ),
-                      child: const Text("Login"),
+                      side: const BorderSide(
+                        color: Colors.black), // Border color
+                      ),
+                      child: const Text("Create Account",
+                      style: TextStyle(color: Colors.black)), // Text color
+                      ),
+                      OutlinedButton(
+                      onPressed: _login,
+                      style: OutlinedButton.styleFrom(
+                      fixedSize: const Size(170, 15), // Set width and height
+                      textStyle:
+                        const TextStyle(fontSize: 16, color: Colors.blue),
+                      shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.zero,
+                      ),
+                      side: const BorderSide(
+                        color: Colors.black), // Border color
+                      ),
+                      child: const Text("Login",
+                      style: TextStyle(color: Colors.black)), // Text color
+                      ),
+                    ],
+                    ),
+
+                  const SizedBox(height: 15),
+
+                  Center(
+                    child: Text(
+                      'OR', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16,),
                     ),
                   ),
+
                   const SizedBox(height: 15),
-                  AppWidgets.loginTextContainer(
-                    'OR',
-                  ),
-                  Center(
-                    child: OutlinedButton(
+
+                  Center( //Google Sign Up
+                    child: SignInButton(
+                      Buttons.google,
+                      text: "Sign up with Google",
                       onPressed: _googleSignIn,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                        textStyle: const TextStyle(fontSize: 16),
-                      ),
-                      child: const Text("Login with Google"), //FOR GOOGLE AUTHENTICATION
                     ),
                   ),
                 ],
