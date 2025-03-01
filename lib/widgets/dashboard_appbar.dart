@@ -6,11 +6,25 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: SizedBox(
+     title: SizedBox(
         height: kToolbarHeight,
-        child: Center(child: Image.asset('assets/UST_LOGO_NO_TEXT.png')),
+        child: Center(child: Image.asset('assets/UST_LOGO_NO_TEXT_300.png')),
       ),
       backgroundColor: Colors.black,
+      leading: IconButton(
+        icon: const Icon(Icons.menu, color: Colors.white, size: 30,),
+        onPressed: () {
+          Scaffold.of(context).openDrawer(); // Left Drawer
+        },
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.notifications_active, color: Color(0xFFFEC00F), size: 30),
+          onPressed: () {
+        Scaffold.of(context).openEndDrawer(); // Right Drawer
+          },
+        ),
+      ],
     );
   }
 

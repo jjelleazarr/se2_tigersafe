@@ -34,7 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               _reportingButton(
                 icon: Icons.phone,
-                iconColor: Colors.blue,
+                iconColor: Colors.black,
                 text: "Emergency",
                 textColor: Colors.red,
                 subText: "Reporting",
@@ -42,9 +42,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 20),
               _reportingButton(
                 icon: Icons.assignment,
-                iconColor: Colors.blue,
+                iconColor: Colors.black,
                 text: "Incident",
-                textColor: Colors.amber,
+                textColor: Color(0xFFFEC00F),
                 subText: "Reporting",
               ),
             ],
