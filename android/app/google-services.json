@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "135221844856-rh3l1vugqvivegt6tkom6hve1ufcnlj7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.simplesys.se2_tigersafe",
+            "certificate_hash": "2b13915008dbafdcff4fc49eaff110cae4855d4f"
+          }
+        },
+        {
           "client_id": "135221844856-co9gblt5pg9fb4mcgi6ge7rvjugrubnu.apps.googleusercontent.com",
           "client_type": 3
         }
