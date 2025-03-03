@@ -20,6 +20,8 @@ dependencies:
   google_sign_in: ^6.2.2
   geolocator: ^13.0.2
   google_fonts: ^6.2.1
+  sign_in_button: ^3.0.0
+  image_picker:
 
 dev_dependencies:
   flutter_test:
@@ -38,4 +40,4 @@ flutter:
     - assets/UST_LOGO_WITH_TEXT.png
     - assets/UST_LOGO_NO_TEXT_300.png
     - assets/UST_LOGO_WITH_TEXT_300.png
-    
+
