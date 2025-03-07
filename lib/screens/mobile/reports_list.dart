@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
-import 'package:se2_tigersafe/widgets/footer.dart'; // Import Footer Widget
+import 'package:se2_tigersafe/widgets/footer.dart'; 
 
 class ReportsListScreen extends StatefulWidget {
   const ReportsListScreen({super.key});
@@ -41,9 +40,10 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
               ),
               child: ListView(
                 children: [
-                  _reportItem("Incident Report", "Fire", const Color(0xFFFF0000)),
-                  _reportItem("Incident Report", "Robbery", const Color(0xFF104BC0)),
-                  _reportItem("Emergency Report", "Fire", const Color(0xFFFF0000)),
+                  // Add the Report Logs here, I don't know how you guys will implement the extraction of data and placing them as arguments but maybe use a while loop??
+                  // while(data != null) {
+                  //   _reportLog(data.title, data.status, data.statusColor); } something like this??? Unless you guys got a better idea
+                  _reportLog('Report 1', 'Pending', Colors.orange), // for Testing purposes, please remove this later
                 ],
               ),
             ),
@@ -55,8 +55,8 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
   }
 
   // Report List Item
-  Widget _reportItem(String title, String status, Color statusColor) {
-    return Container(
+  Widget _reportLog(String title, String status, Color statusColor) { // change whatever needed, maybe add the statusColor part in a model since like the color is dependent on the status enums
+    return Container( // so maybe remove the statusColor parameter and just pass the status?? // also needs a new model file I guess for the status?? not sure 
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
       decoration: const BoxDecoration(
         border: Border(
@@ -75,7 +75,7 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
-                  color: statusColor,
+                  color: statusColor, // should depend on the status
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -87,7 +87,14 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
                 ),
               ),
               const SizedBox(width: 10),
-              const Icon(Icons.chevron_right, color: Colors.black, size: 24),
+              IconButton(
+                icon: const Icon(Icons.chevron_right), 
+                color: Colors.black,
+                iconSize: 24,
+                onPressed: () {
+                  //Navigator
+                },
+                ),
             ],
           ),
         ],
