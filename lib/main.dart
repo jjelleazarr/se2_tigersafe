@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:se2_tigersafe/screens/mobile/account_verification.dart';
 import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
 import 'package:se2_tigersafe/screens/mobile/incident_reporting.dart';
 import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
@@ -42,7 +43,7 @@ class MyApp extends StatelessWidget {
     //if (kIsWeb) {
       //return const WebLoginScreen();
     //} else {
-      return IncidentReportingScreen();
+      return AccountVerification();
     }
   }
 //}

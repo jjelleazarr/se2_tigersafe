@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_left.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,6 +14,22 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  late YoutubePlayerController _controller1;
+  late YoutubePlayerController _controller2;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller1 = YoutubePlayerController(
+      initialVideoId: YoutubePlayer.convertUrlToId("https://www.youtube.com/watch?v=dQw4w9WgXcQ")!,
+      flags: YoutubePlayerFlags(autoPlay: false, mute: false),
+    );
+    _controller2 = YoutubePlayerController(
+      initialVideoId: YoutubePlayer.convertUrlToId("https://www.youtube.com/watch?v=3JZ_D3ELwOQ")!,
+      flags: YoutubePlayerFlags(autoPlay: false, mute: false),
+    );
+  }
+
   void _setScreen(String identifier) {
     if (identifier == 'filters') {
       // Handle filter selection
@@ -24,7 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const DashboardAppBar(), // ✅ Uses the fixed AppBar
+      appBar: const DashboardAppBar(),
       drawer: DashboardDrawerLeft(onSelectScreen: _setScreen),
       endDrawer: DashboardDrawerRight(onSelectScreen: _setScreen),
       body: SafeArea(
@@ -47,6 +64,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 textColor: Color(0xFFFEC00F),
                 subText: "Reporting",
               ),
+              const SizedBox(height: 20),
+              _videoThumbnail(_controller1),
+              const SizedBox(height: 10),
+              _videoThumbnail(_controller2),
             ],
           ),
         ),
@@ -85,7 +106,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center, // Centers text
+                crossAxisAlignment: CrossAxisAlignment.center, 
                 children: [
                   Text(
                     text,
@@ -110,5 +131,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+  }
+
+  Widget _videoThumbnail(YoutubePlayerController controller) {
+    return GestureDetector(
+      onTap: () {
+        _showVideoDialog(controller);
+      },
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            height: 150,
+            width: 300,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(5),
+              image: DecorationImage(
+                image: NetworkImage(YoutubePlayer.getThumbnail(videoId: controller.initialVideoId)),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const Icon(
+            Icons.play_circle_filled,
+            color: Colors.red,
+            size: 50,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showVideoDialog(YoutubePlayerController controller) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: YoutubePlayer(controller: controller),
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller1.dispose();
+    _controller2.dispose();
+    super.dispose();
   }
 }
