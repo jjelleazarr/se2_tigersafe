@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/controllers/account_create_controller.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 
 class AccountCreateScreen extends StatefulWidget {
@@ -22,6 +23,8 @@ class _AccountCreateScreenState extends State<AccountCreateScreen> {
   final _phoneNumberController = TextEditingController();
   final _addressController = TextEditingController();
   final _AccountCreationController = AccountCreationController();
+  String? _selectedRole; // Variable to store selected role
+  final List<String> _roles = ["Stakeholder", "ERT Member", "Command Center Personnel"];
 
   @override
   void dispose() {
@@ -35,6 +38,13 @@ class _AccountCreateScreenState extends State<AccountCreateScreen> {
   }
 
   Future<void> _createAccount() async {
+    if (_selectedRole == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please select a role before proceeding.')),
+      );
+      return;
+    }
+
     UserCredential? userCredential = await _AccountCreationController.createAccount(
       _identificationController.text,
       _passwordController.text,
@@ -43,19 +53,26 @@ class _AccountCreateScreenState extends State<AccountCreateScreen> {
       _middleNameController.text,
       _phoneNumberController.text,
       _addressController.text,
+      _selectedRole!,
       context
       // _profilePicture, // Pass the selected image file
     );
 
-    if (userCredential != null) {
-      print("Account created successfully, navigate to the next screen");
-      Navigator.pushNamed(context, '/dashboard');
-    } else {
-      // Show an error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Account creation failed')),
-      );
-    }
+      if (userCredential != null) {
+        print("Account created successfully, navigate to the next screen");
+
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).get();
+
+        if (userDoc.exists) {
+          final accountStatus = userDoc['accountStatus'];
+          
+          if (accountStatus == "Active") {
+            Navigator.pushNamed(context, '/dashboard');  // Active users go to Dashboard
+          } else {
+            Navigator.pushNamed(context, '/verification_pending');  // Pending users go to Verification Screen
+          }
+        }
+      }   
   }
 
   @override
@@ -209,6 +226,30 @@ class _AccountCreateScreenState extends State<AccountCreateScreen> {
               },
             ),
           ),
+          
+          const SizedBox(height: 20),
+          // Role Dropdown
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 25.0),
+            child: DropdownButtonFormField<String>(
+              value: _selectedRole,
+              decoration: const InputDecoration(
+                labelText: "Select Role",
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                DropdownMenuItem(value: "Stakeholder", child: Text("Stakeholder")),
+                DropdownMenuItem(value: "Emergency Response Team", child: Text("Emergency Response Team")),
+                DropdownMenuItem(value: "Command Center Personnel", child: Text("Command Center Personnel")),
+              ],
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedRole = newValue!;
+                });
+              },
+            ),
+          ),
+
           const SizedBox(height: 30),
           OutlinedButton(
             onPressed: _createAccount, //Navigate to account verification page
@@ -218,6 +259,8 @@ class _AccountCreateScreenState extends State<AccountCreateScreen> {
             ),
             child: const Text("Submit"),
           ),
+          const SizedBox(height: 20),
+          const SizedBox(height: 20),
         ],
       ),
     );
