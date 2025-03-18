@@ -27,32 +27,45 @@ class LoginController{
       
       final UserCredential userCredential = await _auth.signInWithCredential(credential);
       final User? user = userCredential.user;
-      print("✅ Firebase User ID: ${user?.uid}");
+      print("Firebase User ID: ${user?.uid}");
 
       try {
         if (user != null) {
           if (user.email!.endsWith("@ust.edu.ph")) {
             final userDoc = await _userController.getUser(user.uid);
-            print("✅ User not null");
+            print("User not null");
+
             if (userDoc != null) {
               print("User exists, navigating to homepage");
+              Navigator.pushNamed(context!, '/dashboard');
               return userCredential;
             } else {
-              print("User does not exist, navigating to profile setup");
+              print("User does not exist, navigating to account creation");
+              Navigator.pushNamed(context!, '/account_create', arguments: user.uid);
               return userCredential;
             }
           } else {
-            print("Only UST emails are allowed");
-            if (context != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Only UST emails are allowed")));
+            print("Non-UST email detected, verifying eligibility for ERT members");
+            final verificationRequest =
+                await _firestore.collection('verification_requests').doc(user.uid).get();
+
+            if (verificationRequest.exists) {
+              print("User has a pending verification request.");
+              ScaffoldMessenger.of(context!).showSnackBar(
+                SnackBar(content: Text("Your verification request is under review.")),
+              );
+              _googleSignIn.signOut();
+              return null;
+            } else {
+              print("Redirecting user to verification request submission.");
+              Navigator.pushNamed(context!, '/verification_request', arguments: user.uid);
+              return userCredential;
             }
-            _googleSignIn.signOut();
-            return null;
           }
         }
+
       } catch (d) {
-        print("❌ Error during Google Sign In: $d");
+        print("Error during Google Sign In: $d");
         return null;
       }
     } catch (e) {
