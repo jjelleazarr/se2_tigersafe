@@ -21,6 +21,8 @@ dependencies:
   geolocator: ^13.0.2
   google_fonts: ^6.2.1
   sign_in_button: ^3.0.0
+  pdf: ^3.11.3
+  path_provider: ^2.1.5
   image_picker:
 
 dev_dependencies:
