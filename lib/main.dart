@@ -3,14 +3,25 @@ import 'package:firebase_core/firebase_core.dart';
 import 'core/firebase_options.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-// Import screens
+// Mobile screens
 import 'package:se2_tigersafe/screens/mobile/login_screen.dart';
 import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
 import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
+// import 'package:se2_tigersafe/screens/mobile/hazard_reporting.dart';
+// import 'package:se2_tigersafe/screens/mobile/emergency_personnel.dart';
+// import 'package:se2_tigersafe/screens/mobile/report_logging.dart';
+// import 'package:se2_tigersafe/screens/mobile/announcement_board.dart';
+// import 'package:se2_tigersafe/screens/mobile/manage_accounts.dart';
 
+// Web screens
 import 'package:se2_tigersafe/screens/web/login_screen.dart';
 import 'package:se2_tigersafe/screens/web/dashboard.dart';
 import 'package:se2_tigersafe/screens/web/incident_report.dart';
+import 'package:se2_tigersafe/screens/web/hazard_reporting.dart';
+import 'package:se2_tigersafe/screens/web/emergency_personnel.dart';
+import 'package:se2_tigersafe/screens/web/report_logging.dart';
+import 'package:se2_tigersafe/screens/web/announcement_board.dart';
+// import 'package:se2_tigersafe/screens/web/manage_accounts.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,14 +48,24 @@ class MyApp extends StatelessWidget {
           ? {
               // Web Routing
               '/': (context) => WebLoginScreen(),
-              //'/dashboard': (context) => WebDashboardScreen(),
-              //'/incident_report': (context) => WebIncidentReportScreen(),
+              '/dashboard': (context) => WebDashboardScreen(),
+              // '/incident_report': (context) => WebIncidentReportScreen(),
+              // '/hazard_reporting': (context) => HazardReportingScreen(),
+              // '/response_teams': (context) => EmergencyPersonnelScreen(),
+              // '/report_logging': (context) => ReportLoggingScreen(),
+              // '/announcement_board': (context) => AnnouncementBoardScreen(),
+              // '/manage_accounts': (context) => ManageAccountsScreen(),
             }
           : {
               // Mobile Routing
               '/': (context) => MobileLoginScreen(),
-              //'/dashboard': (context) => DashboardScreen(), 
+              // '/dashboard': (context) => DashboardScreen(),
               '/reports': (context) => ReportsListScreen(),
+              // '/hazard_reporting': (context) => IncidentReportingScreen(),
+              // '/response_teams': (context) => EmergencyPersonnelScreen(),
+              // '/report_logging': (context) => ReportLoggingScreen(),
+              // '/announcement_board': (context) => AnnouncementBoardScreen(),
+              // '/manage_accounts': (context) => ManageAccountsScreen(),
             },
     );
   }
