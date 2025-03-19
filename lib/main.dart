@@ -11,8 +11,6 @@ import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
 // import 'package:se2_tigersafe/screens/mobile/emergency_personnel.dart';
 // import 'package:se2_tigersafe/screens/mobile/report_logging.dart';
 // import 'package:se2_tigersafe/screens/mobile/announcement_board.dart';
-// import 'package:se2_tigersafe/screens/mobile/manage_accounts.dart';
-
 // Web screens
 import 'package:se2_tigersafe/screens/web/login_screen.dart';
 import 'package:se2_tigersafe/screens/web/dashboard.dart';
@@ -21,7 +19,10 @@ import 'package:se2_tigersafe/screens/web/hazard_reporting.dart';
 import 'package:se2_tigersafe/screens/web/emergency_personnel.dart';
 import 'package:se2_tigersafe/screens/web/report_logging.dart';
 import 'package:se2_tigersafe/screens/web/announcement_board.dart';
-// import 'package:se2_tigersafe/screens/web/manage_accounts.dart';
+import 'package:se2_tigersafe/screens/web/account_management.dart';
+import 'package:se2_tigersafe/screens/web/manage_accounts.dart';
+import 'package:se2_tigersafe/screens/web/stakeholder_verification.dart';
+import 'package:se2_tigersafe/screens/web/priority_verification.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,7 +55,10 @@ class MyApp extends StatelessWidget {
               // '/response_teams': (context) => EmergencyPersonnelScreen(),
               // '/report_logging': (context) => ReportLoggingScreen(),
               // '/announcement_board': (context) => AnnouncementBoardScreen(),
-              // '/manage_accounts': (context) => ManageAccountsScreen(),
+              '/account_management': (context) => AccountManagementScreen(),
+              '/manage_accounts': (context) => ManageAccountsScreen(),
+              '/stakeholder_verification': (context) => StakeholderVerificationScreen(),
+              '/priority_verification': (context) => PriorityVerificationScreen(),
             }
           : {
               // Mobile Routing
@@ -65,7 +69,6 @@ class MyApp extends StatelessWidget {
               // '/response_teams': (context) => EmergencyPersonnelScreen(),
               // '/report_logging': (context) => ReportLoggingScreen(),
               // '/announcement_board': (context) => AnnouncementBoardScreen(),
-              // '/manage_accounts': (context) => ManageAccountsScreen(),
             },
     );
   }

@@ -74,7 +74,7 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
           ),
           _buildFunctionCard(
             'Manage', 'Accounts', Icons.manage_accounts, '',
-            () => Navigator.pushNamed(context, '/manage_accounts'),
+            () => Navigator.pushNamed(context, '/account_management'),
           ),
         ],
       ),
