@@ -1,27 +1,22 @@
 import 'package:flutter/material.dart';
-import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
-void main() {
-  runApp(const MyApp());
+class WebLoginScreen extends StatefulWidget {
+  @override
+  _WebLoginScreenState createState() => _WebLoginScreenState();
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class _WebLoginScreenState extends State<WebLoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _identificationController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
-    );
+  void dispose() {
+    _identificationController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
-}
-
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
-
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -41,10 +36,10 @@ class LoginScreen extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(right: 20),
-                  child: const Text(
+                  child: Text(
                     'MyUSTe',
                     style: TextStyle(
-                      fontSize: 125,
+                      fontSize: 75,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFFFEC00F),
                       shadows: [
@@ -59,7 +54,7 @@ class LoginScreen extends StatelessWidget {
                 ),
                 Container(
                   padding: const EdgeInsets.all(30.0),
-                  width: 600,
+                  width: 450,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
@@ -74,113 +69,142 @@ class LoginScreen extends StatelessWidget {
                       top: BorderSide(color: Color(0xFFFEC00F), width: 10),
                     ),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Sign In',
-                        style: TextStyle(
-                            fontSize: 50,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black),
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'To access TigerSafe, please make sure you meet the following requirements:',
-                        style: TextStyle(color: Colors.black),
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        '1. UST Google Workspace Personal Account\n'
-                        '2. Google Authenticator Application\n'
-                        '   or\n'
-                        '3. Login with a registered TigerSafe Account',
-                        style: TextStyle(color: Colors.black),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'ID Number',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.black),
-                      ),
-                      const Divider(thickness: 1, color: Colors.black),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Password',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.black),
-                      ),
-                      const Divider(thickness: 1, color: Colors.black),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {},
-                          child: const Text('Forgot Password?',
-                              style: TextStyle(color: Colors.black)),
-                        ),
-                      ),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () {
-                            developer.log('Email: \${emailController.text}');
-                            developer
-                                .log('Password: \${passwordController.text}');
-                          },
-                          child: const Text('Login',
-                              style: TextStyle(color: Colors.black)),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      const Align(
-                        alignment: Alignment.center,
-                        child: Text(
-                          'Or',
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Sign In',
                           style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 40,
                               fontWeight: FontWeight.bold,
                               color: Colors.black),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () {},
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const SizedBox(width: 10),
-                              const Text(
-                                'Sign in with Google',
-                                style: TextStyle(color: Colors.black),
-                              ),
-                            ],
+                        const SizedBox(height: 10),
+                        const Text(
+                          'To access TigerSafe, please ensure:',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          '1. UST Google Workspace Personal Account\n'
+                          '2. Google Authenticator Application\n'
+                          '3. Login with a registered TigerSafe Account',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'ID Number',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, color: Colors.black),
+                        ),
+                        TextFormField(
+                          controller: _identificationController,
+                          decoration: InputDecoration(
+                            hintText: "Enter ID Number",
+                            border: UnderlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your ID Number';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Password',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, color: Colors.black),
+                        ),
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            hintText: "Enter Password",
+                            border: UnderlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your password';
+                            }
+                            return null;
+                          },
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {},
+                            child: const Text('Forgot Password?',
+                                style: TextStyle(color: Colors.black)),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text.rich(
-                          TextSpan(
-                            text: 'Need help signing in? ',
-                            style: TextStyle(color: Colors.black),
-                            children: [
-                              TextSpan(
-                                text: 'Learn More',
-                                style: TextStyle(
-                                  color: Colors.blue,
-                                  decoration: TextDecoration.underline,
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                // Handle login
+                                print('Logging in with ID: ${_identificationController.text}');
+                              }
+                            },
+                            child: const Text('Login'),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const Align(
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Or',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              // Handle Google Sign-In
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(width: 10),
+                                const Text(
+                                  'Sign in with Google',
+                                  style: TextStyle(color: Colors.black),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 20),
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text.rich(
+                            TextSpan(
+                              text: 'Need help signing in? ',
+                              style: TextStyle(color: Colors.black),
+                              children: [
+                                TextSpan(
+                                  text: 'Learn More',
+                                  style: TextStyle(
+                                    color: Colors.blue,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
