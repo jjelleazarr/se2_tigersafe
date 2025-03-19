@@ -169,7 +169,8 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
                           width: double.infinity,
                           child: OutlinedButton(
                             onPressed: () {
-                              // Handle Google Sign-In
+                              // Redirect to Dashboard
+                              Navigator.pushReplacementNamed(context, '/dashboard');
                             },
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -184,6 +185,7 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
                             ),
                           ),
                         ),
+
                         const SizedBox(height: 20),
                         const Align(
                           alignment: Alignment.centerLeft,
