@@ -21,6 +21,7 @@ dependencies:
   geolocator: ^13.0.2
   google_fonts: ^6.2.1
   sign_in_button: ^3.0.0
+  smooth_page_indicator: ^1.2.1
 
 dev_dependencies:
   flutter_test:
@@ -40,4 +41,6 @@ flutter:
     - assets/UST_LOGO_NO_TEXT_300.png
     - assets/UST_LOGO_WITH_TEXT_300.png
     - assets/UST-1.jpg
-
+    - assets/ust_logo.png
+    - assets/ust_carpark.png
+    - assets/user_avatar.png

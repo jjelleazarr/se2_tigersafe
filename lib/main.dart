@@ -50,7 +50,7 @@ class MyApp extends StatelessWidget {
               // Web Routing
               '/': (context) => WebLoginScreen(),
               '/dashboard': (context) => WebDashboardScreen(),
-              // '/incident_report': (context) => WebIncidentReportScreen(),
+              '/incident_report': (context) => WebIncidentReportScreen(),
               // '/hazard_reporting': (context) => HazardReportingScreen(),
               // '/response_teams': (context) => EmergencyPersonnelScreen(),
               // '/report_logging': (context) => ReportLoggingScreen(),

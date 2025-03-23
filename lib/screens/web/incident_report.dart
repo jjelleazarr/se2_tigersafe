@@ -1,192 +1,236 @@
 import 'package:flutter/material.dart';
+import 'package:se2_tigersafe/widgets/web/incident_report/action_buttons.dart';
+import 'package:se2_tigersafe/widgets/web/incident_report/description_box.dart';
+import 'package:se2_tigersafe/widgets/web/incident_report/media_viewer.dart';
+import 'package:se2_tigersafe/widgets/web/incident_report/responder_form.dart';
+import 'package:se2_tigersafe/widgets/web/incident_report/user_info_card.dart';
+import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
+import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class WebIncidentReportScreen extends StatefulWidget {
+  const WebIncidentReportScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: DashboardScreen(),
-    );
-  }
+  State<WebIncidentReportScreen> createState() =>
+      _WebIncidentReportScreenState();
 }
 
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
+  String dropReason = '';
+  bool medicalTeam = false;
+  bool ambulance = false;
+  bool stretcher = false;
+  bool hazardTeam = false;
+  bool security = false;
+
+  String? incidentType;
+  String? severity;
+
+  final List<Map<String, String>> mediaList = [
+    {
+      "type": "image",
+      "url": "https://via.placeholder.com/300x200.png?text=Image+1",
+    },
+    {
+      "type": "video",
+      "url": "https://www.w3schools.com/html/mov_bbb.mp4",
+    },
+    {
+      "type": "image",
+      "url": "https://via.placeholder.com/300x200.png?text=Image+2",
+    },
+    {
+      "type": "image",
+      "url": "https://via.placeholder.com/300x200.png?text=Image+2",
+    },
+    {
+      "type": "image",
+      "url": "https://via.placeholder.com/300x200.png?text=Image+2",
+    },
+    {
+      "type": "image",
+      "url": "https://via.placeholder.com/300x200.png?text=Image+2",
+    },
+    {
+      "type": "image",
+      "url": "https://via.placeholder.com/300x200.png?text=Image+2",
+    },
+    {
+      "type": "image",
+      "url": "https://via.placeholder.com/300x200.png?text=Image+2",
+    },
+  ];
+
+  final List<String> incidentTypes = [
+    'Tree Obstruction',
+    'Fire',
+    'Flood',
+    'Other'
+  ];
+  final List<String> severityLevels = ['Low', 'Moderate', 'High', 'Critical'];
+
+  void handleDropReport() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Drop Report"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Select Reason Why The Report Will Be Dropped:"),
+            RadioListTile(
+              title: const Text("False Report"),
+              value: "False Report",
+              groupValue: dropReason,
+              onChanged: (value) => setState(() => dropReason = value!),
+            ),
+            RadioListTile(
+              title: const Text("Incident Has Already Cleared"),
+              value: "Incident Has Already Cleared",
+              groupValue: dropReason,
+              onChanged: (value) => setState(() => dropReason = value!),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () {
+              print("Dropped report: $dropReason");
+              Navigator.pop(context);
+            },
+            child: const Text("Drop Report"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void handleDispatch() {
+    print("Dispatching responders...");
+  }
+
+  void handleMarkResolved() {
+    print("Marked as resolved");
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundImage: AssetImage(
-                'assets/user_placeholder.png'), // Placeholder for user image on top left
-          ),
-        ),
-        title: Center(
-          child: Image.asset(
-            'assets/ust_icon.png', // Placeholder for UST icon on top
-            height: 80,
-            width: 100,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.menu_rounded, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: const Color(0xFFF5F7FA),
+      appBar: const DashboardAppBar(), // ✅ custom app bar
+      drawer: Drawer(
+        child: ListView(
           children: [
-            Wrap(
-              spacing: 30,
-              runSpacing: 30,
-              alignment: WrapAlignment.center,
-              children: [
-                _buildFeatureCard(
-                    context, 'Incident', 'Reporting', Icons.assignment, ''),
-                _buildFeatureCard(
-                    //need to change all icons to asset images // need to integrate the "count" from the database
-                    context,
-                    'Response',
-                    'Teams',
-                    Icons.medical_services,
-                    ''),
-                _buildFeatureCard(
-                    context, 'Report', 'Logging', Icons.insert_chart, ''),
-                _buildFeatureCard(
-                    context, 'Announcement', 'Board', Icons.campaign, ''),
-              ],
-            ),
-            const SizedBox(height: 40),
-            Wrap(
-              spacing: 30,
-              runSpacing: 30,
-              alignment: WrapAlignment.center,
-              children: [
-                _buildEmergencyCard(context, ''),
-                _buildEmergencyCard(context, ''),
-              ],
+            DrawerHeader(
+              decoration: const BoxDecoration(color: Colors.black),
+              child: Center(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.arrow_back),
+                  label:
+                      const Text("Back"), // Change to route back to dashboard
+                  style:
+                      ElevatedButton.styleFrom(backgroundColor: Colors.amber),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // pop drawer
+                    Navigator.of(context).maybePop(); // pop page
+                  },
+                ),
+              ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildFeatureCard(
-      //styling of all boxes
-      BuildContext context,
-      String title,
-      String subtitle, //change the icon to asset image
-      IconData icon,
-      String count) {
-    return Container(
-      width: 400,
-      height: 270,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.black),
-        borderRadius: BorderRadius.circular(10),
+      endDrawer: DashboardDrawerRight(
+        onSelectScreen: (identifier) {
+          // You can customize this to handle menu actions
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Tapped: $identifier')),
+          );
+        },
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(title,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFFEC00F),
-                      fontSize: 30)),
-              Text(' $subtitle',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30)),
-            ],
-          ),
-          Icon(icon, size: 60, color: Colors.blue),
-          if (count.isNotEmpty)
-            Text(count,
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-          Container(
-            margin: EdgeInsets.symmetric(vertical: 10),
-            height: 2,
-            color: Colors.black,
-            width: double.infinity,
-          ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: IconButton(
-              icon: Icon(Icons.double_arrow_outlined,
-                  color: Color(0xFFFEC00F), size: 45),
-              onPressed: () {
-                print('$title $subtitle clicked');
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmergencyCard(BuildContext context, String location) {
-    return Container(
-      width: 400,
-      height: 270,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.black),
-        borderRadius: BorderRadius.circular(0.1),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('Emergency',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
-                  fontSize: 40)),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.phone, size: 50, color: Colors.blue),
-              const SizedBox(width: 30),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Location:',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 30)),
-                  Text(location, style: TextStyle(fontSize: 30)),
-                ],
+          const SizedBox(height: 10),
+          Expanded(
+            child: Center(
+              child: SingleChildScrollView(
+                child: Container(
+                  width: 1000,
+                  margin: const EdgeInsets.symmetric(
+                      vertical: 10), 
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(
+                        color: Colors.grey.shade400), // optional: softer border
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('📍 UST Carpark',
+                          style: TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      MediaViewer(mediaList: mediaList),
+                      const SizedBox(height: 24),
+                      const DescriptionBox(
+                          description:
+                              'Fallen Tree Branch along Parking Entrance'),
+                      const SizedBox(height: 12),
+                      const UserInfo(
+                        name: 'Max Verstappen',
+                        profileUrl: 'assets/user_avatar.png',
+                        timestamp: 'Submitted on October 16, 10:01 AM',
+                      ),
+                      const SizedBox(height: 24),
+                      ResponderForm(
+                        medicalTeam: medicalTeam,
+                        ambulance: ambulance,
+                        stretcher: stretcher,
+                        hazardTeam: hazardTeam,
+                        security: security,
+                        incidentType: incidentType,
+                        severity: severity,
+                        onChanged: (field, value) => setState(() {
+                          switch (field) {
+                            case 'medicalTeam':
+                              medicalTeam = value;
+                              break;
+                            case 'ambulance':
+                              ambulance = value;
+                              break;
+                            case 'stretcher':
+                              stretcher = value;
+                              break;
+                            case 'hazardTeam':
+                              hazardTeam = value;
+                              break;
+                            case 'security':
+                              security = value;
+                              break;
+                          }
+                        }),
+                        onDropdownChanged: (field, value) => setState(() {
+                          if (field == 'incidentType') incidentType = value;
+                          if (field == 'severity') severity = value;
+                        }),
+                        incidentTypes: incidentTypes,
+                        severityLevels: severityLevels,
+                      ),
+                      const SizedBox(height: 24),
+                      ActionButtons(
+                        onDrop: handleDropReport,
+                        onDispatch: handleDispatch,
+                        onResolve: handleMarkResolved,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
-          ),
-          Container(
-            margin: EdgeInsets.symmetric(vertical: 10),
-            height: 2,
-            color: Colors.black,
-            width: double.infinity,
-          ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: IconButton(
-              icon: Icon(Icons.double_arrow_outlined,
-                  color: Color(0xFFFEC00F), size: 45),
-              onPressed: () {
-                print('Emergency at $location clicked');
-              },
             ),
           ),
         ],
