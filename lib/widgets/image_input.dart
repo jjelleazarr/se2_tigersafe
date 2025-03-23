@@ -128,24 +128,33 @@ class _ImageInputState extends State<ImageInput> {
               },
             ),
           ),
-        ),  const SizedBox(height: 10),
+        ),
+        const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            ElevatedButton.icon(
-              onPressed: _takePicture,
-              icon: const Icon(Icons.camera),
-              label: const Text("Take Photo"),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: _takePicture,
+                icon: const Icon(Icons.camera),
+                label: const Text("Take Photo"),
+              ),
             ),
-            ElevatedButton.icon(
-              onPressed: _recordVideo,
-              icon: const Icon(Icons.videocam),
-              label: const Text("Record Video"),
+            const SizedBox(width: 8), // Add spacing between buttons
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: _recordVideo,
+                icon: const Icon(Icons.videocam),
+                label: const Text("Record Video"),
+              ),
             ),
-            ElevatedButton.icon(
-              onPressed: _pickMedia,
-              icon: const Icon(Icons.photo_library),
-              label: const Text("Select Files"),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: _pickMedia,
+                icon: const Icon(Icons.photo_library),
+                label: const Text("Select Files"),
+              ),
             ),
           ],
         ),

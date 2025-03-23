@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth
 import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/controllers/report_incident_controller.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_left.dart';
@@ -8,6 +8,7 @@ import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:se2_tigersafe/widgets/image_input.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
 
 class IncidentReportingScreen extends StatefulWidget {
   const IncidentReportingScreen({super.key});
@@ -34,12 +35,62 @@ class _IncidentReportingScreenState extends State<IncidentReportingScreen> {
     'Other'
   ];
 
+  Future<void> _confirmAndSaveIncident() async {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirm Report'),
+        content: const Text(
+          'Please ensure that the information you are submitting is accurate and truthful. Submitting false reports may result in disciplinary actions. Do you confirm that the details provided are correct?'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await _saveIncident();
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => const DashboardScreen(),
+                ),
+              );
+            },
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _saveIncident() async {
     final enteredTitle = _titleController.text;
     final enteredLocation = _locationController.text;
     final enteredDescription = _descriptionController.text;
 
-    if (enteredTitle.isEmpty || _selectedMedia.isEmpty || _selectedIncidentType == null || enteredLocation.isEmpty || enteredDescription.isEmpty) {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print("Error: User not authenticated.");
+      return; // Stop the upload
+    }
+    print("User ID: ${user.uid}");
+
+    print("Title: ${_titleController.text}");
+    print("Location: ${_locationController.text}");
+    print("Description: ${_descriptionController.text}");
+    print("Incident Type: $_selectedIncidentType");
+    print("Media Count: ${_selectedMedia.length}");
+
+    if (_titleController.text.isEmpty ||
+        _locationController.text.isEmpty ||
+        _descriptionController.text.isEmpty ||
+        _selectedIncidentType == null ||
+        _selectedMedia.isEmpty) {
+      print("Error: Input fields are empty.");
       return;
     }
 
@@ -53,12 +104,16 @@ class _IncidentReportingScreenState extends State<IncidentReportingScreen> {
       for (File file in _selectedMedia) {
         final fileName = file.path.split('/').last;
         final ref = FirebaseStorage.instance.ref().child('incident_media/$fileName');
+        print("Uploading file: ${file.path}");
         await ref.putFile(file);
+        print("File uploaded, getting download URL");
         String downloadUrl = await ref.getDownloadURL();
         mediaUrls.add(downloadUrl);
+        print("Download URL: $downloadUrl");
       }
 
-      await FirebaseFirestore.instance.collection('incidents').add({
+      print("Saving incident to Firestore");
+      await FirebaseFirestore.instance.collection('reports').add({
         'title': enteredTitle,
         'location': enteredLocation,
         'incidentType': _selectedIncidentType,
@@ -66,10 +121,14 @@ class _IncidentReportingScreenState extends State<IncidentReportingScreen> {
         'mediaUrls': mediaUrls,
         'timestamp': Timestamp.now(),
       });
+      print("Incident saved successfully");
 
       Navigator.of(context).pop();
+      print("success 😍😍😍");
+    } on FirebaseException catch (e) {
+      print("Firebase Error saving incident: ${e.code} - ${e.message}");
     } catch (error) {
-      print("Error saving incident: $error");
+      print("General Error saving incident: $error");
     } finally {
       setState(() {
         _isLoading = false;
@@ -122,6 +181,17 @@ class _IncidentReportingScreenState extends State<IncidentReportingScreen> {
               ],
             ),
             const SizedBox(height: 15),
+
+            // Title Input
+            TextField(
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.title, color: Colors.amber),
+                labelText: 'Title:',
+                border: OutlineInputBorder(),
+              ),
+              controller: _titleController,
+            ),
+            const SizedBox(height: 10),
 
             // Media Upload Section
             ImageInput(
@@ -180,7 +250,7 @@ class _IncidentReportingScreenState extends State<IncidentReportingScreen> {
             _isLoading
                 ? const CircularProgressIndicator()
                 : ElevatedButton(
-              onPressed: _saveIncident,
+              onPressed: _confirmAndSaveIncident,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 50),

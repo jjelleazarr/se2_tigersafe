@@ -3,6 +3,7 @@ import 'package:se2_tigersafe/widgets/dashboard_drawer_left.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:se2_tigersafe/screens/mobile/incident_reporting.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -63,6 +64,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 text: "Incident",
                 textColor: Color(0xFFFEC00F),
                 subText: "Reporting",
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const IncidentReportingScreen(),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 20),
               _videoThumbnail(_controller1),
@@ -81,54 +89,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String text,
     required Color textColor,
     required String subText,
+    VoidCallback? onPressed,
   }) {
-    return Container(
-      height: 80,
-      width: 300,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.black, width: 1.5),
-        borderRadius: BorderRadius.circular(5),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 80,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              border: Border(right: BorderSide(color: Colors.black, width: 1.5)),
-            ),
-            child: Center(
-              child: Icon(icon, color: iconColor, size: 40),
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    text,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                  Text(
-                    subText,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        height: 80,
+        width: 300,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.black, width: 1.5),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 80,
+              height: double.infinity,
+              decoration: BoxDecoration(
+                border: Border(right: BorderSide(color: Colors.black, width: 1.5)),
+              ),
+              child: Center(
+                child: Icon(icon, color: iconColor, size: 40),
               ),
             ),
-          ),
-        ],
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      text,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
+                    Text(
+                      subText,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:se2_tigersafe/screens/mobile/account_create.dart';
 import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
+import 'package:se2_tigersafe/screens/mobile/incident_reporting.dart';
 import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
 import 'core/firebase_options.dart';
 import 'screens/mobile/login_screen.dart';
@@ -39,6 +40,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => MobileLoginScreen(), // Default screen
         '/account_create': (context) => AccountCreateScreen(), // Account create screen
         '/dashboard': (context) => DashboardScreen(), // Ensure this screen exists
+        '/incident_reporting': (context) => IncidentReportingScreen(),
       },
     );
   }
