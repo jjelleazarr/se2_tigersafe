@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
     //if (kIsWeb) {
       //return const WebLoginScreen();
     //} else {
-      return AccountVerification();
+      return IncidentReportingScreen();
     }
   }
 //}

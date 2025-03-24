@@ -7,12 +7,14 @@ import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:se2_tigersafe/widgets/image_input.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:se2_tigersafe/widgets/mobile/incident_reporting/location_input.dart';
 
 class IncidentReportingScreen extends StatefulWidget {
   const IncidentReportingScreen({super.key});
 
   @override
-  State<IncidentReportingScreen> createState() => _IncidentReportingScreenState();
+  State<IncidentReportingScreen> createState() =>
+      _IncidentReportingScreenState();
 }
 
 class _IncidentReportingScreenState extends State<IncidentReportingScreen> {
@@ -37,7 +39,11 @@ class _IncidentReportingScreenState extends State<IncidentReportingScreen> {
     final enteredLocation = _locationController.text;
     final enteredDescription = _descriptionController.text;
 
-    if (enteredTitle.isEmpty || _selectedMedia.isEmpty || _selectedIncidentType == null || enteredLocation.isEmpty || enteredDescription.isEmpty) {
+    if (enteredTitle.isEmpty ||
+        _selectedMedia.isEmpty ||
+        _selectedIncidentType == null ||
+        enteredLocation.isEmpty ||
+        enteredDescription.isEmpty) {
       return;
     }
 
@@ -50,7 +56,8 @@ class _IncidentReportingScreenState extends State<IncidentReportingScreen> {
 
       for (File file in _selectedMedia) {
         final fileName = file.path.split('/').last;
-        final ref = FirebaseStorage.instance.ref().child('incident_media/$fileName');
+        final ref =
+            FirebaseStorage.instance.ref().child('incident_media/$fileName');
         await ref.putFile(file);
         String downloadUrl = await ref.getDownloadURL();
         mediaUrls.add(downloadUrl);
@@ -109,7 +116,10 @@ class _IncidentReportingScreenState extends State<IncidentReportingScreen> {
                 SizedBox(width: 5),
                 Text(
                   "Incident ",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.amber),
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber),
                 ),
                 Text(
                   "Reporting",
@@ -139,6 +149,12 @@ class _IncidentReportingScreenState extends State<IncidentReportingScreen> {
                 border: OutlineInputBorder(),
               ),
               controller: _locationController,
+              readOnly: true,
+            ),
+            LocationInput(
+              onSelectPlace: (selectedLocation) {
+                _locationController.text = selectedLocation;
+              },
             ),
             const SizedBox(height: 10),
 
@@ -181,10 +197,16 @@ class _IncidentReportingScreenState extends State<IncidentReportingScreen> {
                     onPressed: _saveIncident,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 50),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 15, horizontal: 50),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: const Text('SUBMIT', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    child: const Text('SUBMIT',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)),
                   ),
           ],
         ),
