@@ -4,6 +4,7 @@ import 'package:se2_tigersafe/widgets/web/incident_report/description_box.dart';
 import 'package:se2_tigersafe/widgets/web/incident_report/media_viewer.dart';
 import 'package:se2_tigersafe/widgets/web/incident_report/responder_form.dart';
 import 'package:se2_tigersafe/widgets/web/incident_report/user_info_card.dart';
+import 'package:se2_tigersafe/widgets/web/incident_report/incident_location_input.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 
@@ -26,6 +27,9 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
   String? incidentType;
   String? severity;
 
+  String? locationName;
+  String? mapSnapshotUrl;
+
   final List<Map<String, String>> mediaList = [
     {
       "type": "image",
@@ -34,26 +38,6 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
     {
       "type": "video",
       "url": "https://www.w3schools.com/html/mov_bbb.mp4",
-    },
-    {
-      "type": "image",
-      "url": "https://via.placeholder.com/300x200.png?text=Image+2",
-    },
-    {
-      "type": "image",
-      "url": "https://via.placeholder.com/300x200.png?text=Image+2",
-    },
-    {
-      "type": "image",
-      "url": "https://via.placeholder.com/300x200.png?text=Image+2",
-    },
-    {
-      "type": "image",
-      "url": "https://via.placeholder.com/300x200.png?text=Image+2",
-    },
-    {
-      "type": "image",
-      "url": "https://via.placeholder.com/300x200.png?text=Image+2",
     },
     {
       "type": "image",
@@ -120,7 +104,7 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      appBar: const DashboardAppBar(), // ✅ custom app bar
+      appBar: const DashboardAppBar(),
       drawer: Drawer(
         child: ListView(
           children: [
@@ -129,13 +113,12 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
               child: Center(
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.arrow_back),
-                  label:
-                      const Text("Back"), // Change to route back to dashboard
+                  label: const Text("Back"),
                   style:
                       ElevatedButton.styleFrom(backgroundColor: Colors.amber),
                   onPressed: () {
-                    Navigator.of(context).pop(); // pop drawer
-                    Navigator.of(context).maybePop(); // pop page
+                    Navigator.of(context).pop();
+                    Navigator.of(context).maybePop();
                   },
                 ),
               ),
@@ -145,7 +128,6 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
       ),
       endDrawer: DashboardDrawerRight(
         onSelectScreen: (identifier) {
-          // You can customize this to handle menu actions
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Tapped: $identifier')),
           );
@@ -159,13 +141,11 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
               child: SingleChildScrollView(
                 child: Container(
                   width: 1000,
-                  margin: const EdgeInsets.symmetric(
-                      vertical: 10), 
+                  margin: const EdgeInsets.symmetric(vertical: 10),
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border.all(
-                        color: Colors.grey.shade400), // optional: softer border
+                    border: Border.all(color: Colors.grey.shade400),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -175,18 +155,38 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
                           style: TextStyle(
                               fontSize: 24, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 16),
+
+                      // 🔶 Location + Map Snapshot
+                      WebLocationInput(
+                        onLocationSelected: (name, url) {
+                          setState(() {
+                            locationName = name;
+                            mapSnapshotUrl = url;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 24),
+
+                      // 🖼️ Media
                       MediaViewer(mediaList: mediaList),
                       const SizedBox(height: 24),
+
+                      // 📝 Description
                       const DescriptionBox(
-                          description:
-                              'Fallen Tree Branch along Parking Entrance'),
+                        description:
+                            'Fallen Tree Branch along Parking Entrance',
+                      ),
                       const SizedBox(height: 12),
+
+                      // 👤 User Info
                       const UserInfo(
                         name: 'Max Verstappen',
                         profileUrl: 'assets/user_avatar.png',
                         timestamp: 'Submitted on October 16, 10:01 AM',
                       ),
                       const SizedBox(height: 24),
+
+                      // 🚑 Responder Form
                       ResponderForm(
                         medicalTeam: medicalTeam,
                         ambulance: ambulance,
@@ -222,6 +222,8 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
                         severityLevels: severityLevels,
                       ),
                       const SizedBox(height: 24),
+
+                      // ✅ Buttons
                       ActionButtons(
                         onDrop: handleDropReport,
                         onDispatch: handleDispatch,
