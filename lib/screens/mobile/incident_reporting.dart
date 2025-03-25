@@ -9,6 +9,7 @@ import 'package:se2_tigersafe/widgets/image_input.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
+import 'package:se2_tigersafe/widgets/mobile/incident_reporting/location_input.dart';
 
 class IncidentReportingScreen extends StatefulWidget {
   const IncidentReportingScreen({super.key});
@@ -211,6 +212,12 @@ class _IncidentReportingScreenState extends State<IncidentReportingScreen> {
                 border: OutlineInputBorder(),
               ),
               controller: _locationController,
+              readOnly: true,
+            ),
+            LocationInput(
+              onSelectPlace: (selectedLocation) {
+                _locationController.text = selectedLocation;
+              },
             ),
             const SizedBox(height: 10),
 

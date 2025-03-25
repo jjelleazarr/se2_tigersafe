@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:se2_tigersafe/controllers/users_controller.dart';
 import '../models/incidents_collection.dart';
 
 class IncidentController {
+  final _usersController = UserController();
   final CollectionReference incidentsRef =
       FirebaseFirestore.instance.collection('incidents');
 
@@ -36,7 +38,7 @@ class IncidentController {
       String reporterId, String type, String location) async {
     try {
       await incidentsRef.add({
-        'reporter_id': reporterId,
+        'created_by': _usersController.getUser(reporterId),
         'type': type,
         'location': location,
         'status': "Pending", // Default status
