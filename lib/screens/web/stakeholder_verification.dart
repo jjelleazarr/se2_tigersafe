@@ -26,9 +26,12 @@ class StakeholderVerificationScreen extends StatelessWidget {
       itemCount: requests.length,
       itemBuilder: (context, index) {
         return ListTile(
-          title: Text(requests[index]['name']!),
+          title: Text(
+            requests[index]['name']!,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           subtitle: Text("Role: ${requests[index]['role']}"),
-          trailing: IconButton(icon: Icon(Icons.check, color: Colors.green), onPressed: () => _verifyRequest(context, index)),
+          trailing: Icon(Icons.check, color: Colors.green),
         );
       },
     );

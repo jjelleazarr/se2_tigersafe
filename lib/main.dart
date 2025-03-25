@@ -1,14 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:se2_tigersafe/screens/mobile/account_create.dart';
-import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
-import 'package:se2_tigersafe/screens/mobile/incident_reporting.dart';
-import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
 import 'core/firebase_options.dart';
-import 'screens/mobile/login_screen.dart';
-// import 'screens/web/login_screen.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:google_fonts/google_fonts.dart';
+
+// Mobile screens
+import 'package:se2_tigersafe/screens/mobile/login_screen.dart';
+import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
+import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
+// import 'package:se2_tigersafe/screens/mobile/hazard_reporting.dart';
+// import 'package:se2_tigersafe/screens/mobile/emergency_personnel.dart';
+// import 'package:se2_tigersafe/screens/mobile/report_logging.dart';
+// import 'package:se2_tigersafe/screens/mobile/announcement_board.dart';
+// Web screens
+import 'package:se2_tigersafe/screens/web/login_screen.dart';
+import 'package:se2_tigersafe/screens/web/dashboard.dart';
+import 'package:se2_tigersafe/screens/web/incident_report.dart';
+import 'package:se2_tigersafe/screens/web/hazard_reporting.dart';
+import 'package:se2_tigersafe/screens/web/emergency_personnel.dart';
+import 'package:se2_tigersafe/screens/web/report_logging.dart';
+import 'package:se2_tigersafe/screens/web/announcement_board.dart';
+import 'package:se2_tigersafe/screens/web/account_management.dart';
+import 'package:se2_tigersafe/screens/web/manage_accounts.dart';
+import 'package:se2_tigersafe/screens/web/stakeholder_verification.dart';
+import 'package:se2_tigersafe/screens/web/priority_verification.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,15 +30,12 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  print("Firebase Initialized Successfully!");
-  
-
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -32,17 +43,33 @@ class MyApp extends StatelessWidget {
       title: 'TigerSafe',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true, //no need for this, this is already default
-        textTheme: GoogleFonts.robotoTextTheme(),
       ),
-      initialRoute: '/', // This is for mobile
-      routes: {
-        '/': (context) => MobileLoginScreen(), // Default screen
-        '/account_create': (context) => AccountCreateScreen(), // Account create screen
-        '/dashboard': (context) => DashboardScreen(), // Ensure this screen exists
-        '/incident_reporting': (context) => IncidentReportingScreen(),
+      initialRoute: '/',
+      routes: kIsWeb
+          ? {
+        // Web Routing
+        '/': (context) => WebLoginScreen(),
+        '/dashboard': (context) => WebDashboardScreen(),
+        '/incident_report': (context) => WebIncidentReportScreen(),
+        // '/hazard_reporting': (context) => HazardReportingScreen(),
+        // '/response_teams': (context) => EmergencyPersonnelScreen(),
+        // '/report_logging': (context) => ReportLoggingScreen(),
+        // '/announcement_board': (context) => AnnouncementBoardScreen(),
+        '/account_management': (context) => AccountManagementScreen(),
+        '/manage_accounts': (context) => ManageAccountsScreen(),
+        '/stakeholder_verification': (context) => StakeholderVerificationScreen(),
+        '/priority_verification': (context) => PriorityVerificationScreen(),
+      }
+          : {
+        // Mobile Routing
+        '/': (context) => MobileLoginScreen(),
+        // '/dashboard': (context) => DashboardScreen(),
+        '/reports': (context) => ReportsListScreen(),
+        // '/hazard_reporting': (context) => IncidentReportingScreen(),
+        // '/response_teams': (context) => EmergencyPersonnelScreen(),
+        // '/report_logging': (context) => ReportLoggingScreen(),
+        // '/announcement_board': (context) => AnnouncementBoardScreen(),
       },
     );
   }
 }
-//}

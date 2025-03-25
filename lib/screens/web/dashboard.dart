@@ -58,7 +58,7 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
         children: [
           _buildFunctionCard(
             'Incident', 'Reporting', Icons.assignment, '6',
-                () => Navigator.pushNamed(context, '/incident_reporting'),
+                () => Navigator.pushNamed(context, '/incident_report'),
           ),
           _buildFunctionCard(
             'Response', 'Teams', Icons.medical_services, '',
