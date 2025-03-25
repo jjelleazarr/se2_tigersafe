@@ -28,6 +28,7 @@ dependencies:
   location: ^8.0.0
   geocoding: ^3.0.0
   youtube_player_flutter: ^9.1.1
+  video_player: ^2.9.3
 
 dev_dependencies:
   flutter_test:

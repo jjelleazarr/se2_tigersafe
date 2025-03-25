@@ -4,7 +4,7 @@ import 'package:se2_tigersafe/widgets/web/incident_report/description_box.dart';
 import 'package:se2_tigersafe/widgets/web/incident_report/media_viewer.dart';
 import 'package:se2_tigersafe/widgets/web/incident_report/responder_form.dart';
 import 'package:se2_tigersafe/widgets/web/incident_report/user_info_card.dart';
-import 'package:se2_tigersafe/widgets/web/incident_report/incident_location_input.dart';
+import 'package:se2_tigersafe/widgets/web/incident_report/web_location_input.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 
@@ -26,10 +26,13 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
 
   String? incidentType;
   String? severity;
+  String? additionalInfo; // ✅ New
 
-  String? locationName;
-  String? mapSnapshotUrl;
+  String? locationName = 'UST Carpark Entrance';
+  String? mapSnapshotUrl =
+      'https://maps.googleapis.com/maps/api/staticmap?center=14.6091,121.0223&zoom=17&size=600x300&maptype=roadmap&markers=color:red%7Clabel:L%7C14.6091,121.0223&key=YOUR_API_KEY';
 
+  // Media (images/videos)
   final List<Map<String, String>> mediaList = [
     {
       "type": "image",
@@ -45,6 +48,7 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
     },
   ];
 
+  // Dropdown options
   final List<String> incidentTypes = [
     'Tree Obstruction',
     'Fire',
@@ -151,20 +155,12 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('📍 UST Carpark',
-                          style: TextStyle(
-                              fontSize: 24, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 16),
-
-                      // 🔶 Location + Map Snapshot
+                      // User Location + Map Snapshot
                       WebLocationInput(
-                        onLocationSelected: (name, url) {
-                          setState(() {
-                            locationName = name;
-                            mapSnapshotUrl = url;
-                          });
-                        },
+                        locationName: locationName,
+                        staticMapUrl: mapSnapshotUrl,
                       ),
+
                       const SizedBox(height: 24),
 
                       // 🖼️ Media
@@ -195,6 +191,7 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
                         security: security,
                         incidentType: incidentType,
                         severity: severity,
+                        additionalInfo: additionalInfo, // ✅ Pass value
                         onChanged: (field, value) => setState(() {
                           switch (field) {
                             case 'medicalTeam':
@@ -218,9 +215,13 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
                           if (field == 'incidentType') incidentType = value;
                           if (field == 'severity') severity = value;
                         }),
+                        onAdditionalInfoChanged: (value) => setState(() {
+                          additionalInfo = value;
+                        }),
                         incidentTypes: incidentTypes,
                         severityLevels: severityLevels,
                       ),
+
                       const SizedBox(height: 24),
 
                       // ✅ Buttons
