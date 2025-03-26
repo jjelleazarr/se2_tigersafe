@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:se2_tigersafe/screens/web/incident_dashboard.dart';
 import 'core/firebase_options.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -50,7 +51,7 @@ class MyApp extends StatelessWidget {
               // Web Routing
               '/': (context) => WebLoginScreen(),
               '/dashboard': (context) => WebDashboardScreen(),
-              '/incident_report': (context) => WebIncidentReportScreen(),
+              '/incident_report': (context) => IncidentDashboardScreen(),
               // '/hazard_reporting': (context) => HazardReportingScreen(),
               // '/response_teams': (context) => EmergencyPersonnelScreen(),
               // '/report_logging': (context) => ReportLoggingScreen(),
