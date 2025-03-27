@@ -1,206 +1,138 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:se2_tigersafe/controllers/manage_accounts_controller.dart';
 
-class ManageAccountsScreen extends StatefulWidget {
-  @override
-  _ManageAccountsScreenState createState() => _ManageAccountsScreenState();
-}
+class ManageAccountsScreen extends StatelessWidget {
+  final List<String> statusOptions = ["Active", "Pending", "Rejected", "Banned"];
 
-class _ManageAccountsScreenState extends State<ManageAccountsScreen> {
-  List<Map<String, String>> accounts = [
-    {
-      "first_name": "Peter",
-      "middle_name": "",
-      "surname": "Parker",
-      "phone_number": "09123456789",
-      "address": "New York City",
-      "roles": "/roles/stakeholder",
-      "status": "Approved"
-    },
-    {
-      "first_name": "Nathan",
-      "middle_name": "",
-      "surname": "Drake",
-      "phone_number": "09111111111",
-      "address": "Boston",
-      "roles": "/roles/stakeholder",
-      "status": "Pending"
-    },
-    {
-      "first_name": "Jake",
-      "middle_name": "",
-      "surname": "Seresin",
-      "phone_number": "09999999999",
-      "address": "Los Angeles",
-      "roles": "/roles/stakeholder",
-      "status": "Approved"
-    },
-  ];
-
-  final List<String> statusOptions = [
-    "Approved",
-    "Pending",
-    "Rejected",
-    "Banned"
-  ];
-
-  void _editAccount(int index) {
-    final acc = accounts[index];
-
-    TextEditingController firstNameController =
-        TextEditingController(text: acc['first_name']);
-    TextEditingController middleNameController =
-        TextEditingController(text: acc['middle_name']);
-    TextEditingController surnameController =
-        TextEditingController(text: acc['surname']);
-    TextEditingController phoneController =
-        TextEditingController(text: acc['phone_number']);
-    TextEditingController addressController =
-        TextEditingController(text: acc['address']);
-    String role = acc['roles'] ?? "/roles/stakeholder";
-    String status = acc['status'] ?? "Pending";
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Edit Account"),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                    controller: firstNameController,
-                    decoration: InputDecoration(labelText: "First Name")),
-                TextField(
-                    controller: middleNameController,
-                    decoration: InputDecoration(labelText: "Middle Name")),
-                TextField(
-                    controller: surnameController,
-                    decoration: InputDecoration(labelText: "Surname")),
-                TextField(
-                    controller: phoneController,
-                    decoration: InputDecoration(labelText: "Phone Number")),
-                TextField(
-                    controller: addressController,
-                    decoration: InputDecoration(labelText: "Address")),
-                DropdownButtonFormField<String>(
-                  value: role,
-                  items: [
-                    DropdownMenuItem(
-                      value: "/roles/stakeholder",
-                      child: Text("Stakeholder"),
-                    ),
-                    DropdownMenuItem(
-                      value: "/roles/command_center_personnel",
-                      child: Text("Command Center"),
-                    ),
-                    DropdownMenuItem(
-                      value: "/roles/emergency_response_team",
-                      child: Text("Emergency Response Team"),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    role = value!;
-                  },
-                  decoration: InputDecoration(labelText: "Role"),
-                ),
-                DropdownButtonFormField<String>(
-                  value: status,
-                  items: statusOptions
-                      .map((s) =>
-                          DropdownMenuItem(value: s, child: Text(s)))
-                      .toList(),
-                  onChanged: (value) {
-                    status = value!;
-                  },
-                  decoration: InputDecoration(labelText: "Status"),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
-            ElevatedButton(
-              onPressed: () async {
-                setState(() {
-                  accounts[index] = {
-                    "first_name": firstNameController.text,
-                    "middle_name": middleNameController.text,
-                    "surname": surnameController.text,
-                    "phone_number": phoneController.text,
-                    "address": addressController.text,
-                    "roles": role,
-                    "status": status,
-                  };
-                });
-
-                final userId = "some_user_id"; // Replace with actual user document ID
-                final controller = ManageAccountsController();
-
-                await controller.adminRoleUpdate(userId, role, context);
-                await controller.accountApproval(userId, status.toLowerCase(), context);
-
-                Navigator.pop(context);
-              },
-              child: Text("Save Changes"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _deleteAccount(int index) {
-    setState(() {
-      accounts.removeAt(index);
-    });
-  }
-
-  void _banAccount(int index) async {
-    final userId = "some_user_id"; // Replace with actual user document ID
-    final controller = ManageAccountsController();
-
-    // Update local UI state
-    setState(() {
-      accounts[index]['status'] = "Banned";
-    });
-
-    // Then update Firestore
-    await controller.accountApproval(userId, "banned", context);
-  }
-
+  final Map<String, String> roleLabels = {
+    "Stakeholder": "Stakeholder",
+    "Command Center Personnel": "Command Center Personnel",
+    "Emergency Response Team": "Emergency Response Team",
+  };
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Manage Accounts")),
-      body: ListView.builder(
-        itemCount: accounts.length,
-        itemBuilder: (context, index) {
-          final name = "${accounts[index]['first_name']} ${accounts[index]['surname']}";
-          final role = accounts[index]['roles']!.split("/").last;
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('users').snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
 
-          return ListTile(
-            title: Text(name, style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text("Role: ${role.capitalize()}, Status: ${accounts[index]['status']}"),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(icon: Icon(Icons.edit, color: Colors.blue), onPressed: () => _editAccount(index)),
-                IconButton(icon: Icon(Icons.block, color: Colors.orange), onPressed: () => _banAccount(index)),
-                IconButton(icon: Icon(Icons.delete, color: Colors.red), onPressed: () => _deleteAccount(index)),
-              ],
-            ),
+          final docs = snapshot.data!.docs;
+
+          return ListView.builder(
+            itemCount: docs.length,
+            itemBuilder: (context, index) {
+              final doc = docs[index];
+              final data = doc.data() as Map<String, dynamic>;
+              final fullName = "${data['first_name']} ${data['surname']}";
+              final role = roleLabels[data['roles']] ?? "Unknown";
+              final status = data['account_status'] ?? "Unknown";
+
+              return ListTile(
+                tileColor: status == "Banned" ? Colors.red.shade100 : null,
+                title: Text(fullName, style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text("Role: $role, Account Status: $status"),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.edit, color: Colors.blue),
+                      onPressed: () => _editAccount(context, doc.id, data),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.block, color: Colors.orange),
+                      onPressed: () async {
+                        final controller = ManageAccountsController();
+                        await controller.updateStatus(doc.id, "Banned", context);
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.delete, color: Colors.red),
+                      onPressed: () async {
+                        final controller = ManageAccountsController();
+                        await controller.deleteAccount(doc.id, context);
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
           );
         },
       ),
     );
   }
+
+  void _editAccount(BuildContext context, String docId, Map<String, dynamic> data) {
+    final controller = ManageAccountsController();
+
+    final firstNameController = TextEditingController(text: data['first_name']);
+    final middleNameController = TextEditingController(text: data['middle_name']);
+    final surnameController = TextEditingController(text: data['surname']);
+    final phoneController = TextEditingController(text: data['phone_number']);
+    final addressController = TextEditingController(text: data['address']);
+    String role = data['roles']?.toString() ?? "Stakeholder";
+    String status = data['account_status']?.toString() ?? "Pending";
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Edit Account"),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(controller: firstNameController, decoration: InputDecoration(labelText: "First Name")),
+              TextField(controller: middleNameController, decoration: InputDecoration(labelText: "Middle Name")),
+              TextField(controller: surnameController, decoration: InputDecoration(labelText: "Surname")),
+              TextField(controller: phoneController, decoration: InputDecoration(labelText: "Phone Number")),
+              TextField(controller: addressController, decoration: InputDecoration(labelText: "Address")),
+              DropdownButtonFormField<String>(
+                value: role,
+                decoration: InputDecoration(labelText: "Role"),
+                items: roleLabels.entries
+                    .map((entry) => DropdownMenuItem(value: entry.key, child: Text(entry.value)))
+                    .toList(),
+                onChanged: (value) => role = value!,
+              ),
+              DropdownButtonFormField<String>(
+                value: status,
+                decoration: InputDecoration(labelText: "Account Status"),
+                items: statusOptions.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                onChanged: (value) => status = value!,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
+          ElevatedButton(
+            onPressed: () async {
+              await controller.updateAccountFields(
+                userId: docId,
+                updatedFields: {
+                  'first_name': firstNameController.text,
+                  'middle_name': middleNameController.text,
+                  'surname': surnameController.text,
+                  'phone_number': phoneController.text,
+                  'address': addressController.text,
+                  'roles': role,
+                  'account_status': status,
+                },
+                context: context,
+              );
+              Navigator.pop(context);
+            },
+            child: Text("Save Changes"),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-// Helper to capitalize the first letter
 extension StringCasingExtension on String {
-  String capitalize() =>
-      this.isNotEmpty ? "${this[0].toUpperCase()}${substring(1)}" : "";
+  String capitalize() => isNotEmpty ? "${this[0].toUpperCase()}${substring(1)}" : "";
 }

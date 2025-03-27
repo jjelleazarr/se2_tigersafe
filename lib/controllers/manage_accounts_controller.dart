@@ -4,57 +4,65 @@ import 'package:flutter/material.dart';
 class ManageAccountsController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> adminRoleUpdate(String userId, String newRole, BuildContext? context) async {
+  Future<void> updateAccountFields({
+    required String userId,
+    required Map<String, dynamic> updatedFields,
+    BuildContext? context,
+  }) async {
     try {
-      await _firestore.collection("users").doc(userId).update({
-        "role": newRole,
-      });
-
-      sendNotification(userId, "Role Updated", "Your role has been updated to $newRole");
+      await _firestore.collection("users").doc(userId).update(updatedFields);
 
       if (context != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Role Updated")),
+          const SnackBar(content: Text("Account updated successfully.")),
         );
       } else {
-        print("Role Updated");
+        print("Account updated successfully.");
       }
     } catch (e) {
-      print("Error updating role: $e");
+      print("Error updating account fields: $e");
       if (context != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error updating role")),
+          const SnackBar(content: Text("Error updating account.")),
         );
       }
     }
   }
 
-  Future<void> accountApproval(String userId, String action, BuildContext? context) async {
+  Future<void> updateRole(String userId, String newRole, BuildContext? context) async {
+    await updateAccountFields(
+      userId: userId,
+      updatedFields: {"roles": newRole},
+      context: context,
+    );
+    sendNotification(userId, "Role Updated", "Your role has been updated to $newRole");
+  }
+
+  Future<void> updateStatus(String userId, String newStatus, BuildContext? context) async {
+    await updateAccountFields(
+      userId: userId,
+      updatedFields: {"account_status": newStatus},
+      context: context,
+    );
+    sendNotification(userId, "Account Status Updated", "Your account status is now $newStatus.");
+  }
+
+  Future<void> deleteAccount(String userId, BuildContext? context) async {
     try {
-      if (action == "approve") {
-        await _firestore.collection("users").doc(userId).update({
-          "status": "Approved",
-        });
-        sendNotification(userId, "Account Approved", "Your account has been approved.");
-      } else {
-        await _firestore.collection("users").doc(userId).update({
-          "status": "Rejected",
-        });
-        sendNotification(userId, "Account Rejected", "Your account application has been rejected.");
-      }
+      await _firestore.collection("users").doc(userId).delete();
 
       if (context != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Account $action")),
+          const SnackBar(content: Text("Account deleted successfully.")),
         );
       } else {
-        print("Account $action");
+        print("Account deleted successfully.");
       }
     } catch (e) {
-      print("Error approving/rejecting account: $e");
+      print("Error deleting account: $e");
       if (context != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error processing account action")),
+          const SnackBar(content: Text("Error deleting account.")),
         );
       }
     }
