@@ -20,9 +20,8 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
 
   void _setScreen(String identifier) {
     if (identifier == 'filters') {
-      // Handle filter selection
     } else {
-      Navigator.of(context).pop(); // Close the drawer
+      Navigator.of(context).pop(); 
     }
   }
 
@@ -36,12 +35,12 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
         child: Column(
           children: [
             SizedBox(
-              height: 200, // Adjust height to fit function cards
+              height: 200, 
               child: _buildMainFunctionsSection(context),
             ),
             const SizedBox(height: 30),
             SizedBox(
-              height: 150, // Adjust height to fit emergency reports
+              height: 150, 
               child: _buildEmergencyReportsSection(),
             ),
           ],
@@ -132,7 +131,7 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
             ),
           )
         : SingleChildScrollView(
-            scrollDirection: Axis.horizontal, // Allow horizontal scrolling
+            scrollDirection: Axis.horizontal,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: emergencyReports
