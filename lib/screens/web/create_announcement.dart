@@ -45,9 +45,10 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
     String? attachmentUrl;
     if (_attachment != null) {
       attachmentUrl = await controller.uploadAttachment(
-        File(_attachment!.path!),
-        _attachment!.name,
+    _attachment!.bytes!,
+    _attachment!.name,
       );
+
     }
 
     final announcement = AnnouncementModel(

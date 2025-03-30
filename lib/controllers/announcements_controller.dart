@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:mime/mime.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import '../models/announcements_collection.dart';
 
 class AnnouncementController {
@@ -41,16 +43,20 @@ class AnnouncementController {
   }
 
   /// Upload an attachment and return its URL
-  Future<String> uploadAttachment(File file, String fileName) async {
-    try {
-      final ref = _storage.ref().child('announcement_attachments/$fileName');
-      await ref.putFile(file);
-      final url = await ref.getDownloadURL();
-      print("📎 Attachment uploaded.");
-      return url;
-    } catch (e) {
-      print("Error uploading attachment: $e");
-      rethrow;
+    Future<String?> uploadAttachment(Uint8List fileBytes, String fileName) async {
+      try {
+        final mimeType = lookupMimeType(fileName) ?? 'application/octet-stream';
+        final ref = _storage.ref().child('announcement_attachments/$fileName');
+
+        await ref.putData(
+          fileBytes,
+          SettableMetadata(contentType: mimeType),
+        );
+
+        return await ref.getDownloadURL();
+      } catch (e) {
+        print("Error uploading attachment: $e");
+        return null;
+      }
     }
   }
-}
