@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -5,7 +6,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:se2_tigersafe/controllers/announcements_controller.dart';
 import 'package:se2_tigersafe/models/announcements_collection.dart';
-import 'dart:io';
 
 class CreateAnnouncementScreen extends StatefulWidget {
   @override
@@ -16,6 +16,7 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final List<String> _selectedRoles = [];
+  final _formKey = GlobalKey<FormState>();
   String? _announcementType;
   String? _priority;
   PlatformFile? _attachment;
@@ -44,18 +45,14 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
 
     String? attachmentUrl;
     if (_attachment != null) {
-      attachmentUrl = await controller.uploadAttachment(
-    _attachment!.bytes!,
-    _attachment!.name,
-      );
-
+      attachmentUrl = await controller.uploadAttachment(_attachment!.bytes!, _attachment!.name);
     }
 
     final announcement = AnnouncementModel(
-      announcementId: '', // Firestore will assign the ID
+      announcementId: '',
       title: _titleController.text,
       content: _descriptionController.text,
-      createdBy: 'admin_id', // TODO: Replace with actual user ID
+      createdBy: 'admin_id',
       announcementType: _announcementType!,
       priority: _priority!,
       timestamp: Timestamp.now(),
@@ -98,99 +95,156 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
                 color: Colors.white.withOpacity(0.9),
               ),
               child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Center(
-                      child: Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'Create ',
-                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
-                            ),
-                            TextSpan(
-                              text: 'Announcement',
-                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.orange),
-                            ),
-                          ],
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Center(
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Create ',
+                                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+                              ),
+                              TextSpan(
+                                text: 'Announcement',
+                                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.orange),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    Align(alignment: Alignment.centerLeft, child: Text("Select Visibility:", style: TextStyle(fontSize: 16))),
-                    Wrap(
-                      spacing: 8.0,
-                      children: [
-                        ElevatedButton(
-                          onPressed: _toggleSelectAll,
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[300]),
-                          child: Text(_allSelected() ? "Deselect All" : "Select All"),
-                        ),
-                        ..._roles.map((role) {
-                          final label = {
-                            "Stakeholder": "Stakeholder",
-                            "Command Center Personnel": "Command Center",
-                            "Emergency Response Team": "Emergency Response Team",
-                          }[role]!;
-                          return FilterChip(
-                            label: Text(label),
-                            selected: _selectedRoles.contains(role),
-                            onSelected: (selected) {
-                              setState(() {
-                                selected ? _selectedRoles.add(role) : _selectedRoles.remove(role);
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _titleController,
-                      decoration: InputDecoration(labelText: "Announcement Title"),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _descriptionController,
-                      maxLines: 5,
-                      decoration: InputDecoration(labelText: "Announcement Description"),
-                    ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: ElevatedButton.icon(
-                        onPressed: _pickFile,
-                        icon: Icon(Icons.attach_file),
-                        label: Text("Add Attachment"),
+                      const SizedBox(height: 24),
+                      Align(alignment: Alignment.centerLeft, child: Text("Select Visibility:", style: TextStyle(fontSize: 16))),
+                      Wrap(
+                        spacing: 8.0,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: _toggleSelectAll,
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[300]),
+                            icon: Icon(Icons.select_all),
+                            label: Text(_allSelected() ? "Deselect All" : "Select All"),
+                          ),
+                          ..._roles.map((role) {
+                            final label = {
+                              "Stakeholder": "Stakeholder",
+                              "Command Center Personnel": "Command Center",
+                              "Emergency Response Team": "Emergency Response Team",
+                            }[role]!;
+                            return FilterChip(
+                              label: Text(label),
+                              selected: _selectedRoles.contains(role),
+                              onSelected: (selected) {
+                                setState(() {
+                                  selected ? _selectedRoles.add(role) : _selectedRoles.remove(role);
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      value: _announcementType,
-                      decoration: InputDecoration(labelText: "Announcement Type"),
-                      items: ["General", "Hazard", "Emergency Alert"]
-                          .map((type) => DropdownMenuItem(value: type, child: Text(type)))
-                          .toList(),
-                      onChanged: (value) => setState(() => _announcementType = value!),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      value: _priority,
-                      decoration: InputDecoration(labelText: "Priority"),
-                      items: _priorities
-                          .map((priority) => DropdownMenuItem(value: priority, child: Text(priority)))
-                          .toList(),
-                      onChanged: (value) => setState(() => _priority = value!),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _isUploading ? null : _submitAnnouncement,
-                      child: _isUploading
-                          ? CircularProgressIndicator(color: Colors.white)
-                          : Text("Publish Announcement"),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _titleController,
+                        decoration: InputDecoration(
+                          labelText: "Title",
+                          prefixIcon: Icon(Icons.title),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        maxLength: 100,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Title is required';
+                          } else if (value.length < 5) {
+                            return 'Title must be at least 5 characters';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _descriptionController,
+                        maxLines: 5,
+                        maxLength: 1000,
+                        decoration: InputDecoration(
+                          labelText: "Description",
+                          prefixIcon: Icon(Icons.description),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Description is required';
+                          } else if (value.length < 10) {
+                            return 'Description must be at least 10 characters';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      if (_attachment != null)
+                        Card(
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          child: ListTile(
+                            leading: Icon(Icons.attach_file),
+                            title: Text(_attachment!.name),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(icon: Icon(Icons.refresh), onPressed: _pickFile),
+                                IconButton(icon: Icon(Icons.close), onPressed: () => setState(() => _attachment = null)),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: ElevatedButton.icon(
+                            onPressed: _pickFile,
+                            icon: Icon(Icons.attach_file),
+                            label: Text("Add Attachment"),
+                          ),
+                        ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: _announcementType,
+                        decoration: InputDecoration(
+                          labelText: "Announcement Type",
+                          prefixIcon: Icon(Icons.category),
+                        ),
+                        items: ["General", "Hazard", "Emergency Alert"]
+                            .map((type) => DropdownMenuItem(value: type, child: Text(type)))
+                            .toList(),
+                        onChanged: (value) => setState(() => _announcementType = value!),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: _priority,
+                        decoration: InputDecoration(
+                          labelText: "Priority",
+                          prefixIcon: Icon(Icons.flag),
+                        ),
+                        items: _priorities
+                            .map((priority) => DropdownMenuItem(value: priority, child: Text(priority)))
+                            .toList(),
+                        onChanged: (value) => setState(() => _priority = value!),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: _isUploading ? null : _submitAnnouncement,
+                        icon: Icon(Icons.campaign),
+                        label: _isUploading
+                            ? CircularProgressIndicator(color: Colors.white)
+                            : Text("Publish Announcement"),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
