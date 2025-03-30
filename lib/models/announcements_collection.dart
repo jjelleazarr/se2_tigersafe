@@ -1,18 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AnnouncementModel {
-  final String announcementId; // Auto-generated document ID
-  final String title; 
-  final String content; 
-  final Timestamp createdAt;
-  final List<String> targetRoles;
+  final String announcementId;
+  final String title;
+  final String content;
+  final String createdBy;
+  final String announcementType;
+  final String priority;
+  final Timestamp timestamp;
+  final List<String> visibilityScope;
+  final String? attachments;
 
   AnnouncementModel({
     required this.announcementId,
     required this.title,
     required this.content,
-    required this.createdAt,
-    required this.targetRoles,
+    required this.createdBy,
+    required this.announcementType,
+    required this.priority,
+    required this.timestamp,
+    required this.visibilityScope,
+    this.attachments,
   });
 
   /// Convert Firestore document to Dart Object
@@ -21,8 +29,12 @@ class AnnouncementModel {
       announcementId: documentId,
       title: json['title'],
       content: json['content'],
-      createdAt: json['created_at'],
-      targetRoles: List<String>.from(json['target_roles'] ?? []),
+      createdBy: json['created_by'],
+      announcementType: json['announcement_type'],
+      priority: json['priority'],
+      timestamp: json['timestamp'],
+      visibilityScope: List<String>.from(json['visibility_scope'] ?? []),
+      attachments: json['attachments'],
     );
   }
 
@@ -31,8 +43,12 @@ class AnnouncementModel {
     return {
       'title': title,
       'content': content,
-      'created_at': createdAt,
-      'target_roles': targetRoles,
+      'created_by': createdBy,
+      'announcement_type': announcementType,
+      'priority': priority,
+      'timestamp': timestamp,
+      'visibility_scope': visibilityScope,
+      if (attachments != null) 'attachments': attachments,
     };
   }
 }

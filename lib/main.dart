@@ -20,6 +20,7 @@ import 'package:se2_tigersafe/screens/web/hazard_reporting.dart';
 import 'package:se2_tigersafe/screens/web/emergency_personnel.dart';
 import 'package:se2_tigersafe/screens/web/report_logging.dart';
 import 'package:se2_tigersafe/screens/web/announcement_board.dart';
+import 'package:se2_tigersafe/screens/web/create_announcement.dart';
 import 'package:se2_tigersafe/screens/web/account_management.dart';
 import 'package:se2_tigersafe/screens/web/manage_accounts.dart';
 import 'package:se2_tigersafe/screens/web/stakeholder_verification.dart';
@@ -56,6 +57,7 @@ class MyApp extends StatelessWidget {
               // '/response_teams': (context) => EmergencyPersonnelScreen(),
               // '/report_logging': (context) => ReportLoggingScreen(),
               '/announcement_board': (context) => AnnouncementBoardScreen(),
+              '/create_announcement': (context) => CreateAnnouncementScreen(),
               '/account_management': (context) => AccountManagementScreen(),
               '/manage_accounts': (context) => ManageAccountsScreen(),
               '/stakeholder_verification': (context) => StakeholderVerificationScreen(),

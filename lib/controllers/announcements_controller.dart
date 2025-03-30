@@ -1,71 +1,56 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 import '../models/announcements_collection.dart';
 
 class AnnouncementController {
-  final CollectionReference announcementsRef =
-      FirebaseFirestore.instance.collection('announcements');
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  /// 🔹 **Fetch All Announcements**
-  Future<List<AnnouncementModel>> getAllAnnouncements() async {
+  /// Create a new announcement
+  Future<void> createAnnouncement(AnnouncementModel announcement) async {
     try {
-      QuerySnapshot snapshot = await announcementsRef.get();
-      return snapshot.docs.map((doc) {
-        return AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>, doc.id);
-      }).toList();
+      await _firestore.collection('announcements').add(announcement.toJson());
+      print("Announcement created.");
     } catch (e) {
-      print('Error fetching announcements: $e');
-      return [];
+      print("Error creating announcement: $e");
+      rethrow;
     }
   }
 
-  /// 🔹 **Get a Specific Announcement by ID**
-  Future<AnnouncementModel?> getAnnouncementById(String announcementId) async {
+  /// Update an existing announcement by ID
+  Future<void> updateAnnouncement(String id, Map<String, dynamic> updates) async {
     try {
-      DocumentSnapshot doc = await announcementsRef.doc(announcementId).get();
-      if (doc.exists) {
-        return AnnouncementModel.fromJson(doc.data() as Map<String, dynamic>, doc.id);
-      }
+      await _firestore.collection('announcements').doc(id).update(updates);
+      print("Announcement updated.");
     } catch (e) {
-      print('Error fetching announcement: $e');
-    }
-    return null;
-  }
-
-  /// 🔹 **Add a New Announcement**
-  Future<void> addAnnouncement(String title, String content, List<String> targetRoles) async {
-    try {
-      await announcementsRef.add({
-        'title': title,
-        'content': content,
-        'created_at': Timestamp.now(),
-        'target_roles': targetRoles, // List of role names allowed to see the announcement
-      });
-      print("✅ Announcement '$title' added successfully!");
-    } catch (e) {
-      print('Error adding announcement: $e');
+      print("Error updating announcement: $e");
+      rethrow;
     }
   }
 
-  /// 🔹 **Update an Announcement**
-  Future<void> updateAnnouncement(String announcementId, String newTitle, String newContent) async {
+  /// Delete an announcement by ID
+  Future<void> deleteAnnouncement(String id) async {
     try {
-      await announcementsRef.doc(announcementId).update({
-        'title': newTitle,
-        'content': newContent,
-      });
-      print("✅ Announcement updated successfully!");
+      await _firestore.collection('announcements').doc(id).delete();
+      print("Announcement deleted.");
     } catch (e) {
-      print('Error updating announcement: $e');
+      print("Error deleting announcement: $e");
+      rethrow;
     }
   }
 
-  /// 🔹 **Delete an Announcement**
-  Future<void> deleteAnnouncement(String announcementId) async {
+  /// Upload an attachment and return its URL
+  Future<String> uploadAttachment(File file, String fileName) async {
     try {
-      await announcementsRef.doc(announcementId).delete();
-      print("✅ Announcement deleted successfully!");
+      final ref = _storage.ref().child('announcement_attachments/$fileName');
+      await ref.putFile(file);
+      final url = await ref.getDownloadURL();
+      print("📎 Attachment uploaded.");
+      return url;
     } catch (e) {
-      print('Error deleting announcement: $e');
+      print("Error uploading attachment: $e");
+      rethrow;
     }
   }
 }
