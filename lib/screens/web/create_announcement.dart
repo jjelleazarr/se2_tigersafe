@@ -35,7 +35,10 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
   }
 
   Future<void> _submitAnnouncement() async {
-    if (_selectedRoles.isEmpty || _announcementType == null || _priority == null || _titleController.text.isEmpty || _descriptionController.text.isEmpty) {
+    if (!_formKey.currentState!.validate() ||
+      _selectedRoles.isEmpty ||
+      _announcementType == null ||
+      _priority == null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please fill in all fields.')));
       return;
     }
