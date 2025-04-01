@@ -21,8 +21,19 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
   String? _priority;
   PlatformFile? _attachment;
   bool _isUploading = false;
+  final List<String> _roles = [
+    "stakeholder",
+    "command_center",
+    "emergency_response_team"
+  ];
 
-  final List<String> _roles = ["Stakeholder", "Command Center Personnel", "Emergency Response Team"];
+  final Map<String, String> _roleLabels = {
+    "stakeholder": "Stakeholder",
+    "command_center": "Command Center", // merged
+    "emergency_response_team": "Emergency Response Team"
+  };
+
+
   final List<String> _priorities = ["High", "Medium", "Low"];
 
   Future<void> _pickFile() async {
@@ -130,18 +141,13 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
                             icon: Icon(Icons.select_all),
                             label: Text(_allSelected() ? "Deselect All" : "Select All"),
                           ),
-                          ..._roles.map((role) {
-                            final label = {
-                              "Stakeholder": "Stakeholder",
-                              "Command Center Personnel": "Command Center",
-                              "Emergency Response Team": "Emergency Response Team",
-                            }[role]!;
+                          ..._roleLabels.entries.map((entry) {
                             return FilterChip(
-                              label: Text(label),
-                              selected: _selectedRoles.contains(role),
+                              label: Text(entry.value),
+                              selected: _selectedRoles.contains(entry.key),
                               onSelected: (selected) {
                                 setState(() {
-                                  selected ? _selectedRoles.add(role) : _selectedRoles.remove(role);
+                                  selected ? _selectedRoles.add(entry.key) : _selectedRoles.remove(entry.key);
                                 });
                               },
                             );
