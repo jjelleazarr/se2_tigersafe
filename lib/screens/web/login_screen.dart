@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class WebLoginScreen extends StatefulWidget {
   @override
@@ -8,15 +9,81 @@ class WebLoginScreen extends StatefulWidget {
 
 class _WebLoginScreenState extends State<WebLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _identificationController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _identificationController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
+
+  Future<void> _handleLogin() async {
+    if (_formKey.currentState!.validate()) {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+
+      try {
+        final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+
+        final uid = credential.user!.uid;
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+        if (!userDoc.exists) throw 'User data not found.';
+        final data = userDoc.data()!;
+        final account_status = data['account_status'];
+        final role = data['roles'];
+
+        if (account_status != 'Active') throw 'Your account has not been approved yet.';
+        if (role != 'command_center_operator' && role != 'command_center_admin') {
+          throw 'Only Command Center Personnel can access the web platform.';
+        }
+
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    try {
+      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      final UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithPopup(googleProvider);
+
+      final uid = userCredential.user!.uid;
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+      if (!userDoc.exists) {
+        throw 'No profile found for this Google user. You may need to register via mobile first.';
+      }
+
+      final role = userDoc['roles'];
+      final status = userDoc['account_status'];
+
+      if (status != 'Active') {
+        throw 'Account is not active.';
+      }
+
+      if (role != 'command_center_operator' && role != 'command_center_admin') {
+        throw 'Google login is allowed only for Command Center personnel.';
+      }
+
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Google sign-in failed: $e')),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +91,7 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/UST-1.jpg', // Background image
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/UST-1.jpg', fit: BoxFit.cover),
           ),
           Align(
             alignment: Alignment.center,
@@ -42,32 +106,18 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
                       fontSize: 75,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFFFEC00F),
-                      shadows: [
-                        Shadow(
-                          offset: Offset(2, 2),
-                          blurRadius: 3,
-                          color: Colors.black45,
-                        ),
-                      ],
+                      shadows: [Shadow(offset: Offset(2, 2), blurRadius: 3, color: Colors.black45)],
                     ),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.all(30.0),
                   width: 450,
+                  padding: const EdgeInsets.all(30),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                    border: Border(
-                      top: BorderSide(color: Color(0xFFFEC00F), width: 10),
-                    ),
+                    border: Border(top: BorderSide(color: Color(0xFFFEC00F), width: 10)),
+                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))],
                   ),
                   child: Form(
                     key: _formKey,
@@ -75,124 +125,71 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Sign In',
-                          style: TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black),
-                        ),
+                        const Text('Sign In', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 10),
-                        const Text(
-                          'To access TigerSafe, please ensure:',
-                          style: TextStyle(color: Colors.black),
-                        ),
+                        const Text('To access TigerSafe, please ensure:'),
                         const SizedBox(height: 10),
                         const Text(
                           '1. UST Google Workspace Personal Account\n'
                           '2. Google Authenticator Application\n'
                           '3. Login with a registered TigerSafe Account',
-                          style: TextStyle(color: Colors.black),
                         ),
                         const SizedBox(height: 20),
-                        const Text(
-                          'ID Number',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, color: Colors.black),
-                        ),
+                        const Text('Email', style: TextStyle(fontWeight: FontWeight.bold)),
                         TextFormField(
-                          controller: _identificationController,
-                          decoration: InputDecoration(
-                            hintText: "Enter ID Number",
+                          controller: _emailController,
+                          decoration: const InputDecoration(
+                            hintText: "Enter Email",
                             border: UnderlineInputBorder(),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your ID Number';
-                            }
-                            return null;
-                          },
+                          validator: (value) =>
+                              value == null || value.isEmpty ? 'Please enter your email' : null,
                         ),
                         const SizedBox(height: 20),
-                        const Text(
-                          'Password',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, color: Colors.black),
-                        ),
+                        const Text('Password', style: TextStyle(fontWeight: FontWeight.bold)),
                         TextFormField(
                           controller: _passwordController,
                           obscureText: true,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             hintText: "Enter Password",
                             border: UnderlineInputBorder(),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
-                            }
-                            return null;
-                          },
+                          validator: (value) =>
+                              value == null || value.isEmpty ? 'Please enter your password' : null,
                         ),
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {},
-                            child: const Text('Forgot Password?',
-                                style: TextStyle(color: Colors.black)),
+                            onPressed: () {}, // No implementation yet
+                            child: const Text('Forgot Password?', style: TextStyle(color: Colors.black)),
                           ),
                         ),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                // Handle login
-                                print('Logging in with ID: ${_identificationController.text}');
-                              }
-                            },
+                            onPressed: _handleLogin,
                             child: const Text('Login'),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        const Align(
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Or',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black),
-                          ),
+                        const Center(
+                          child: Text('Or',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
                         const SizedBox(height: 20),
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton(
-                            onPressed: () {
-                              // Redirect to Dashboard
-                              Navigator.pushReplacementNamed(context, '/dashboard');
-                            },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const SizedBox(width: 10),
-                                const Text(
-                                  'Sign in with Google',
-                                  style: TextStyle(color: Colors.black),
-                                ),
-                              ],
-                            ),
+                            onPressed: _signInWithGoogle,
+                            child: Text('Sign in with Google', style: TextStyle(color: Colors.black)),
                           ),
                         ),
-
                         const SizedBox(height: 20),
                         const Align(
                           alignment: Alignment.centerLeft,
                           child: Text.rich(
                             TextSpan(
                               text: 'Need help signing in? ',
-                              style: TextStyle(color: Colors.black),
                               children: [
                                 TextSpan(
                                   text: 'Learn More',
