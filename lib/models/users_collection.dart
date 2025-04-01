@@ -10,7 +10,7 @@ class UserModel {
   final String? phoneNumber;
   final String? address;
   final String? profilePicture;
-  final String status; // Enum: Pending, Approved, Denied
+  final String accountStatus; // Enum: Pending, Active, Denied
   final DateTime createdAt; // Timestamp
   final String roles; // Reference to roles collection
 
@@ -24,7 +24,7 @@ class UserModel {
     this.phoneNumber,
     this.address,
     this.profilePicture,
-    required this.status,
+    required this.accountStatus,
     required this.createdAt,
     required this.roles,
   });
@@ -41,7 +41,7 @@ class UserModel {
       phoneNumber: json['phone_number'],
       address: json['address'],
       profilePicture: json['profile_picture'],
-      status: json['status'],
+      accountStatus: json['account_status'],
       createdAt: (json['created_at'] as Timestamp).toDate(),
       roles: json['roles'],
     );
@@ -58,7 +58,7 @@ class UserModel {
       'phone_number': phoneNumber,
       'address': address,
       'profile_picture': profilePicture,
-      'status': status,
+      'account_status': accountStatus,
       'created_at': Timestamp.fromDate(createdAt),
       'roles': roles, // Reference to roles
     };
