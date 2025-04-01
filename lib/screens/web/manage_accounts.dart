@@ -6,9 +6,10 @@ class ManageAccountsScreen extends StatelessWidget {
   final List<String> statusOptions = ["Active", "Pending", "Rejected", "Banned"];
 
   final Map<String, String> roleLabels = {
-    "Stakeholder": "Stakeholder",
-    "Command Center Personnel": "Command Center Personnel",
-    "Emergency Response Team": "Emergency Response Team",
+    "stakeholder": "Stakeholder",
+    "command_center_operator": "Command Center Operator",
+    "command_center_admin":"Command Center Admin",
+    "emergency_response_team": "Emergency Response Team"
   };
 
   @override
