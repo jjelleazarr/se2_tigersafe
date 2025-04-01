@@ -3,7 +3,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/controllers/users_controller.dart';
-import 'package:se2_tigersafe/models/users_collection.dart';
 
 class LoginController{
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -11,52 +10,84 @@ class LoginController{
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final UserController _userController = UserController();
 
-  Future<UserCredential?> loginWithGoogle(BuildContext? context) async{
+  Future<UserCredential?> loginWithGoogle(BuildContext? context) async {
     try {
       print("Google Sign-In Started...");
 
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      print("Google User: ${googleUser?.email}");
+      // Ensure Google Sign-In is initialized
+      await _googleSignIn.signOut();
 
-      final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
-      
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        print("Google sign-in was cancelled");
+        if (context != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Google sign-in was cancelled")),
+          );
+        }
+        return null;
+      }
+
+      print("Google User: ${googleUser.email}");
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+        print("Missing tokens - Access: ${googleAuth.accessToken}, ID: ${googleAuth.idToken}");
+        if (context != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Failed to obtain required tokens")),
+          );
+        }
+        return null;
+      }
+
       final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth?.accessToken,
-      idToken: googleAuth?.idToken,
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
       );
-      
+
       final UserCredential userCredential = await _auth.signInWithCredential(credential);
       final User? user = userCredential.user;
-      print("✅ Firebase User ID: ${user?.uid}");
-      
-      if (user != null) {
-        if (user.email!.endsWith("@ust.edu.ph")) {
-          final userDoc = await _userController.getUser(user.uid);
 
-          if (userDoc != null) {
-            print("User exists, navigating to homepage");
-            Navigator.pushNamed(context!, '/dashboard.dart');
-            return userCredential;
-          } else {
-            print("User does not exist, navigating to profile setup");
-            Navigator.pushNamed(context!, '/edit_profile.dart', arguments: user.uid);
-            return userCredential;
-          }
-        } else {
-          print("Only UST emails are allowed");
-          if (context != null){
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Only UST emails are allowed")));
-          }
-          _googleSignIn.signOut();
-          return null;
+      if (user == null) {
+        print("Firebase user is null");
+        if (context != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Failed to authenticate with Firebase")),
+          );
         }
+        return null;
       }
-      return null;
+
+      print("Firebase User ID: ${user.uid}");
+      print("Firebase User Email: ${user.email ?? 'No email'}");
+      print("Firebase User Display Name: ${user.displayName ?? 'No display name'}");
+
+      if (user.email?.endsWith("@ust.edu.ph") ?? false) {
+        final userDoc = await _userController.getUser(user.uid);
+
+        if (context != null) {
+          if (userDoc != null) {
+            Navigator.pushNamed(context, '/dashboard');
+          } else {
+            Navigator.pushNamed(context, '/profile_setup', arguments: user.uid);
+          }
+        }
+        return userCredential;
+      } else {
+        // Handle non-UST email case
+        if (context != null) {
+          Navigator.pushNamed(context, '/verification_request', arguments: user.uid);
+        }
+        return userCredential;
+      }
     } catch (e) {
-      print("Error during Google Sign In: $e");
+      print("Detailed Google Sign-In Error: $e");
       if (context != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error during sign in : $e")),);
+          SnackBar(content: Text("Sign-in error: ${e.toString()}")),
+        );
       }
       return null;
     }
@@ -111,7 +142,7 @@ class LoginController{
   Future<void> accountLocking(String userId, int failedAttempts) async {
     if(failedAttempts > 3) {
       try {
-        await _firestore.collection('users').doc(userId).update({'accountStatus': 'locked'}); // Account locked
+        await _firestore.collection('users').doc(userId).update({'account_status': 'Locked'}); // Account locked
         print("Account locked.");
         final userDoc = await _userController.getUser(userId);
         await FirebaseAuth.instance.sendPasswordResetEmail(email: userDoc!.email); // Password reset email sent
@@ -122,3 +153,4 @@ class LoginController{
     }
   }
 }
+
