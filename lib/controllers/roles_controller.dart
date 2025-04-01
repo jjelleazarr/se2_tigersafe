@@ -5,7 +5,7 @@ class RoleController {
   final CollectionReference rolesRef =
       FirebaseFirestore.instance.collection('roles');
 
-  /// 🔹 **Fetch All Roles**
+  /// Fetch All Roles
   Future<List<RoleModel>> getAllRoles() async {
     try {
       QuerySnapshot snapshot = await rolesRef.get();
@@ -18,7 +18,7 @@ class RoleController {
     }
   }
 
-  /// 🔹 **Get a Specific Role by ID**
+  /// Get a Specific Role by ID
   Future<RoleModel?> getRoleById(String roleId) async {
     try {
       DocumentSnapshot doc = await rolesRef.doc(roleId).get();
@@ -31,7 +31,7 @@ class RoleController {
     return null;
   }
 
-  /// 🔹 **Add a New Role**
+  /// Add a New Role
   Future<void> addRole(String roleName) async {
     try {
       await rolesRef.add({'role_name': roleName});
@@ -41,7 +41,7 @@ class RoleController {
     }
   }
 
-  /// 🔹 **Update a Role Name**
+  /// Update a Role Name
   Future<void> updateRole(String roleId, String newRoleName) async {
     try {
       await rolesRef.doc(roleId).update({'role_name': newRoleName});
@@ -51,7 +51,7 @@ class RoleController {
     }
   }
 
-  /// 🔹 **Delete a Role**
+  /// Delete a Role
   Future<void> deleteRole(String roleId) async {
     try {
       await rolesRef.doc(roleId).delete();
