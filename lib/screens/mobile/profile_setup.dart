@@ -27,8 +27,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   String? _selectedRole;
   final Map<String, String> _roleLabels = {
     "stakeholder": "Stakeholder",
-    "ert_member": "ERT Member",
-    "command_center_operator": "Command Center Operator"
+    "emergency_response_team": "ERT Member",
   };
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
@@ -93,17 +92,16 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
     try {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'identification': user.email ?? '',
+        'id_number': _idNumberController.text,
         'email': user.email ?? '',
         'surname': _lastNameController.text,
         'first_name': _firstNameController.text,
         'middle_name': _middleNameController.text,
         'phone_number': _phoneNumberController.text,
         'address': _addressController.text,
-        'roles': _selectedRole ?? 'Stakeholder', // Provide default value
+        'roles': _selectedRole ?? 'stakeholder', // Provide default value
         'account_status': 'Active',
         'profile_image_url': _profileImage,
-        'id_number': _idNumberController.text,
         'created_at': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true)); // Use merge to avoid overwriting existing data
 
