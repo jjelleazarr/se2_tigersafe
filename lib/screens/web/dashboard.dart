@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 
@@ -11,6 +13,26 @@ class WebDashboardScreen extends StatefulWidget {
 
 class _WebDashboardScreenState extends State<WebDashboardScreen> {
   final ScrollController _scrollController = ScrollController();
+  String? _userRole;
+  bool _isLoading = true;
+
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserRole();
+  }
+
+  Future<void> _fetchUserRole() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    setState(() {
+      _userRole = doc['roles'];
+      _isLoading = false;
+    });
+  }
+}
 
   @override
   void dispose() {
@@ -27,6 +49,12 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: DashboardAppBar(),
       endDrawer: DashboardDrawerRight(onSelectScreen: _setScreen),
@@ -34,15 +62,9 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            SizedBox(
-              height: 200, 
-              child: _buildMainFunctionsSection(context),
-            ),
+            SizedBox(height: 200, child: _buildMainFunctionsSection(context)),
             const SizedBox(height: 30),
-            SizedBox(
-              height: 150, 
-              child: _buildEmergencyReportsSection(),
-            ),
+            SizedBox(height: 150, child: _buildEmergencyReportsSection()),
           ],
         ),
       ),
@@ -50,35 +72,27 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
   }
 
     Widget _buildMainFunctionsSection(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal, // Allow horizontal scrolling
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildFunctionCard(
-            'Incident', 'Reporting', Icons.assignment, '6',
-            () => Navigator.pushNamed(context, '/incident_report'),
-          ),
-          _buildFunctionCard(
-            'Response', 'Teams', Icons.medical_services, '',
-            () => Navigator.pushNamed(context, '/response_teams'),
-          ),
-          _buildFunctionCard(
-            'Report', 'Logging', Icons.insert_chart, '',
-            () => Navigator.pushNamed(context, '/report_logging'),
-          ),
-          _buildFunctionCard(
-            'Announcements', 'Board', Icons.campaign, '',
-            () => Navigator.pushNamed(context, '/announcement_board'),
-          ),
-          _buildFunctionCard(
-            'Manage', 'Accounts', Icons.manage_accounts, '',
-            () => Navigator.pushNamed(context, '/account_management'),
-          ),
-        ],
-      ),
-    );
-  }
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildFunctionCard('Incident', 'Reporting', Icons.assignment, '6',
+                () => Navigator.pushNamed(context, '/incident_report')),
+            _buildFunctionCard('Response', 'Teams', Icons.medical_services, '',
+                () => Navigator.pushNamed(context, '/response_teams')),
+            _buildFunctionCard('Report', 'Logging', Icons.insert_chart, '',
+                () => Navigator.pushNamed(context, '/report_logging')),
+            _buildFunctionCard('Announcements', 'Board', Icons.campaign, '',
+                () => Navigator.pushNamed(context, '/announcement_board')),
+            if (_userRole == 'command_center_admin')
+              _buildFunctionCard('Manage', 'Accounts', Icons.manage_accounts, '',
+                  () => Navigator.pushNamed(context, '/account_management')),
+          ],
+        ),
+      );
+    }
+
 
 
 

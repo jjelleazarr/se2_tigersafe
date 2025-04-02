@@ -43,7 +43,8 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
           throw 'Only Command Center Personnel can access the web platform.';
         }
 
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        // Route based on role
+        routeToDashboard(context);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: $e')),
@@ -84,6 +85,12 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
   //     );
   //   }
   // }
+
+  void routeToDashboard(BuildContext context) {
+    Navigator.pushReplacementNamed(context, '/dashboard');
+  }
+
+
 
 
   @override
@@ -171,11 +178,6 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
                             onPressed: _handleLogin,
                             child: const Text('Login'),
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Center(
-                          child: Text('Or',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
                         // Google Sign-In button (not a part of this version)
                         // const SizedBox(height: 20),
