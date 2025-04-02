@@ -10,7 +10,7 @@ class UserModel {
   final String? phoneNumber;
   final String? address;
   final String? profilePicture;
-  final String accountStatus; // Enum: Pending, Active, Denied
+  final String accountStatus; // Enum: Pending, Active, Denied, Banned
   final DateTime createdAt; // Timestamp
   final String roles; // Reference to roles collection
 
