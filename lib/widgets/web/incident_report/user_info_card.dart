@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 
 class UserInfo extends StatelessWidget {
   final String name;
-  final String profileUrl;
+  final String? profileUrl;
   final String timestamp;
 
   const UserInfo({
     super.key,
     required this.name,
-    required this.profileUrl,
+    this.profileUrl,
     required this.timestamp,
   });
 
@@ -24,7 +24,12 @@ class UserInfo extends StatelessWidget {
       child: Row(
         children: [
           const SizedBox(width: 12),
-          CircleAvatar(backgroundImage: AssetImage(profileUrl), radius: 16),
+          CircleAvatar(
+            backgroundImage: (profileUrl != null && profileUrl!.isNotEmpty)
+                ? NetworkImage(profileUrl!)
+                : const AssetImage('assets/default_user_dp.jpg') as ImageProvider,
+            radius: 16,
+          ),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,

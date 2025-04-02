@@ -59,12 +59,13 @@ class MyApp extends StatelessWidget {
         '/incident_report': (context) => IncidentDashboardScreen(),
         // '/hazard_reporting': (context) => HazardReportingScreen(),
         // '/response_teams': (context) => EmergencyPersonnelScreen(),
-        // '/report_logging': (context) => ReportLoggingScreen(),
+        '/report_logging': (context) => ReportLoggingScreen(),
         // '/announcement_board': (context) => AnnouncementBoardScreen(),
         '/account_management': (context) => AccountManagementScreen(),
         '/manage_accounts': (context) => ManageAccountsScreen(),
         '/stakeholder_verification': (context) => StakeholderVerificationScreen(),
         '/priority_verification': (context) => PriorityVerificationScreen(),
+        '/incident_dashboard': (context) => IncidentDashboardScreen(),
       }
           : {
         // Mobile Routing

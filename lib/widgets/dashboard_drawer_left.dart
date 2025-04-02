@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
 
 class DashboardDrawerLeft extends StatelessWidget {
   const DashboardDrawerLeft({super.key, required this.onSelectScreen});
 
   final void Function(String identifier) onSelectScreen;
+
+  Future<void> _logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushReplacementNamed('/login_screen');
+  }
 
   @override
   Widget build(context) {
@@ -28,40 +34,38 @@ class DashboardDrawerLeft extends StatelessWidget {
                 Text(
                   'Max Verstappen',
                   style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                        color: Colors.white,
-                      ),
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),
           ),
           ListTile(
             leading:
-                const Icon(Icons.account_box, size: 26, color: Colors.white),
+            const Icon(Icons.account_box, size: 26, color: Colors.white),
             title: Text(
               'My Account',
               style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                    color: Colors.white,
-                    fontSize: 24,
-                  ),
+                color: Colors.white,
+                fontSize: 24,
+              ),
             ),
             onTap: () {
-              onSelectScreen('account');
+              Navigator.of(context).pushReplacementNamed('/profile_screen');
             },
           ),
           ListTile(
             leading:
-                const Icon(Icons.assignment, size: 26, color: Colors.white),
+            const Icon(Icons.assignment, size: 26, color: Colors.white),
             title: Text(
               'Your Reports',
               style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                    color: Colors.white,
-                    fontSize: 24,
-                  ),
+                color: Colors.white,
+                fontSize: 24,
+              ),
             ),
             onTap: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (ctx) => const ReportsListScreen()),
-              );
+              Navigator.of(context).pushReplacementNamed('/reports_list');
             },
           ),
           ListTile(
@@ -69,12 +73,12 @@ class DashboardDrawerLeft extends StatelessWidget {
             title: Text(
               'Logout',
               style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                    color: Colors.white,
-                    fontSize: 24,
-                  ),
+                color: Colors.white,
+                fontSize: 24,
+              ),
             ),
             onTap: () {
-              onSelectScreen('logout');
+              _logout(context);
             },
           ),
         ],

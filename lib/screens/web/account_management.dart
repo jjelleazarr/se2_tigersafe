@@ -4,6 +4,8 @@ import 'stakeholder_verification.dart';
 import 'priority_verification.dart';
 
 class AccountManagementScreen extends StatelessWidget {
+  const AccountManagementScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(

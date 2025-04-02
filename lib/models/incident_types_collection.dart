@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class IncidentTypeModel {
   final String typeId; // Auto-generated document ID

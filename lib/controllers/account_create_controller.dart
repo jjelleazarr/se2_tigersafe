@@ -1,4 +1,4 @@
-import 'dart:io'; // For File
+// For File
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -51,15 +51,15 @@ class AccountCreationController {
         // Store user data in Firestore
         await _firestore.collection('users').doc(user.uid).set({
           'identification': identification,
-          'lastName': lastName,
-          'firstName': firstName,
-          'middleName': middleName,
-          'phoneNumber': phoneNumber,
+          'last_name': lastName,
+          'first_name': firstName,
+          'middle_name': middleName,
+          'phone_number': phoneNumber,
           'address': address,
           // 'profilePictureUrl': profilePictureUrl, // Store URL
           'email': user.email, //store the email
-          'role': role, // This should be determined by user selection in UI
-          'accountStatus': role == "Stakeholder" && user.email!.endsWith("@ust.edu.ph")
+          'roles': role, // This should be determined by user selection in UI
+          'account_status': role == "Stakeholder" && user.email!.endsWith("@ust.edu.ph")
               ? "Active"
               : "Pending", // If UST email & Stakeholder, activate immediately; else, pending verification
           'created_at': Timestamp.now()
@@ -68,7 +68,7 @@ class AccountCreationController {
         final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
 
         if (userDoc.exists) {
-          final accountStatus = userDoc['accountStatus'];
+          final accountStatus = userDoc['account_status'];
 
           if (accountStatus == "Active") {
             if (context != null) {
