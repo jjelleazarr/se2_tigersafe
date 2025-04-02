@@ -12,6 +12,10 @@ import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
 // import 'package:se2_tigersafe/screens/mobile/emergency_personnel.dart';
 // import 'package:se2_tigersafe/screens/mobile/report_logging.dart';
 // import 'package:se2_tigersafe/screens/mobile/announcement_board.dart';
+import 'package:se2_tigersafe/screens/mobile/account_create.dart';
+import 'package:se2_tigersafe/screens/mobile/incident_reporting.dart';
+import 'package:se2_tigersafe/screens/mobile/account_verification.dart';
+import 'package:se2_tigersafe/screens/mobile/profile_setup.dart';
 // Web screens
 import 'package:se2_tigersafe/screens/web/login_screen.dart';
 import 'package:se2_tigersafe/screens/web/dashboard.dart';
@@ -65,9 +69,13 @@ class MyApp extends StatelessWidget {
             }
           : {
               // Mobile Routing
-              '/': (context) => MobileLoginScreen(),
-              // '/dashboard': (context) => DashboardScreen(),
-              '/reports': (context) => ReportsListScreen(),
+            '/': (context) => MobileLoginScreen(),
+            '/login_screen': (context) => MobileLoginScreen(),
+            '/account_create': (context) => AccountCreateScreen(),
+            '/account_verification': (context) => AccountVerification(),
+            '/dashboard': (context) => DashboardScreen(),
+            '/reports': (context) => ReportsListScreen(),
+            '/profile_setup': (context) => ProfileSetupScreen(),
               // '/hazard_reporting': (context) => IncidentReportingScreen(),
               // '/response_teams': (context) => EmergencyPersonnelScreen(),
               // '/report_logging': (context) => ReportLoggingScreen(),
