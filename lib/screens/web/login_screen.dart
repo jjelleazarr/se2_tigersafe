@@ -52,37 +52,38 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
     }
   }
 
-  Future<void> _signInWithGoogle() async {
-    try {
-      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-      final UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithPopup(googleProvider);
+  // Google Sign-In method, not used in current version.
+  // Future<void> _signInWithGoogle() async {
+  //   try {
+  //     final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+  //     final UserCredential userCredential =
+  //         await FirebaseAuth.instance.signInWithPopup(googleProvider);
 
-      final uid = userCredential.user!.uid;
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+  //     final uid = userCredential.user!.uid;
+  //     final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
-      if (!userDoc.exists) {
-        throw 'No profile found for this Google user. You may need to register via mobile first.';
-      }
+  //     if (!userDoc.exists) {
+  //       throw 'No profile found for this Google user. You may need to register via mobile first.';
+  //     }
 
-      final role = userDoc['roles'];
-      final status = userDoc['account_status'];
+  //     final role = userDoc['roles'];
+  //     final status = userDoc['account_status'];
 
-      if (status != 'Active') {
-        throw 'Account is not active.';
-      }
+  //     if (status != 'Active') {
+  //       throw 'Account is not active.';
+  //     }
 
-      if (role != 'command_center_operator' && role != 'command_center_admin') {
-        throw 'Google login is allowed only for Command Center personnel.';
-      }
+  //     if (role != 'command_center_operator' && role != 'command_center_admin') {
+  //       throw 'Google login is allowed only for Command Center personnel.';
+  //     }
 
-      Navigator.pushReplacementNamed(context, '/dashboard');
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Google sign-in failed: $e')),
-      );
-    }
-  }
+  //     Navigator.pushReplacementNamed(context, '/dashboard');
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Google sign-in failed: $e')),
+  //     );
+  //   }
+  // }
 
 
   @override
@@ -176,14 +177,15 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
                           child: Text('Or',
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            onPressed: _signInWithGoogle,
-                            child: Text('Sign in with Google', style: TextStyle(color: Colors.black)),
-                          ),
-                        ),
+                        // Google Sign-In button (not a part of this version)
+                        // const SizedBox(height: 20),
+                        // SizedBox(
+                        //   width: double.infinity,
+                        //   child: OutlinedButton(
+                        //     onPressed: _signInWithGoogle,
+                        //     child: Text('Sign in with Google', style: TextStyle(color: Colors.black)),
+                        //   ),
+                        // ),
                         const SizedBox(height: 20),
                         const Align(
                           alignment: Alignment.centerLeft,
