@@ -32,12 +32,12 @@ class ERTMemberController {
   }
 
   /// Add a New ERT Member
-  Future<void> addERTMember(String userId, String teamId) async {
+  Future<void> addERTMember(String userId, String specialization) async {
     try {
       await ertMembersRef.add({
         'user_id': userId,
-        'team_id': teamId,
-        'status': "Active", // Default status
+        'status': "Active",
+        'specialization': specialization, // medical, security, rescue, etc.
         'created_at': Timestamp.now(),
       });
       print("ERT member added successfully!");
@@ -45,6 +45,7 @@ class ERTMemberController {
       print('Error adding ERT member: $e');
     }
   }
+
 
   /// Update ERT Member Status
   Future<void> updateERTMemberStatus(String memberId, String newStatus) async {
