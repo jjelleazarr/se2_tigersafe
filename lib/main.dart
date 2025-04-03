@@ -58,7 +58,7 @@ class MyApp extends StatelessWidget {
               '/dashboard': (context) => WebDashboardScreen(),
               '/incident_report': (context) => IncidentDashboardScreen(),
               // '/hazard_reporting': (context) => HazardReportingScreen(),
-              // '/response_teams': (context) => EmergencyPersonnelScreen(),
+              '/response_teams': (context) => ResponseTeamsScreen(),
               // '/report_logging': (context) => ReportLoggingScreen(),
               '/announcement_board': (context) => AnnouncementBoardScreen(),
               '/create_announcement': (context) => CreateAnnouncementScreen(),
