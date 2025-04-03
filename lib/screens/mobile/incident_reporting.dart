@@ -117,10 +117,12 @@ class _IncidentReportingScreenState extends State<IncidentReportingScreen> {
       await FirebaseFirestore.instance.collection('reports').add({
         'title': enteredTitle,
         'location': enteredLocation,
-        'incidentType': _selectedIncidentType,
+        'incident_type': _selectedIncidentType,
         'description': enteredDescription,
-        'mediaUrls': mediaUrls,
+        'media_urls': mediaUrls,
         'timestamp': Timestamp.now(),
+        'created_by': user.uid,
+        'status': 'Pending',
       });
       print("Incident saved successfully");
 

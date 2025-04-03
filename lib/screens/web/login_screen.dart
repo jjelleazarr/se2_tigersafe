@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class WebLoginScreen extends StatefulWidget {
+  const WebLoginScreen({super.key});
+
   @override
   _WebLoginScreenState createState() => _WebLoginScreenState();
 }

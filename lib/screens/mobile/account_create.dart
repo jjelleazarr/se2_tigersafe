@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/controllers/account_create_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -82,7 +81,7 @@ class _AccountCreateScreenState extends State<AccountCreateScreen> {
         //put this in another class since so many will use it
         title: SizedBox(
           height: kToolbarHeight,
-          child: Center(child: Image.asset('assets/UST_LOGO_NO_TEXT_300.png')),
+          child: Center(child: Image.asset('assets/UST_LOGO_NO_TEXT.png')),
         ),
         backgroundColor: Colors.black,
       ),

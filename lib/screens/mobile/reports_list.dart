@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
 import 'package:se2_tigersafe/widgets/footer.dart'; // Import Footer Widget
 

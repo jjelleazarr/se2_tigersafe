@@ -72,16 +72,19 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
         final userDoc = await _userController.getUser(userCredential.user!.uid);
         if (userDoc == null) {
           // Navigate to profile setup, and pass the user id
-          Navigator.pushNamed(context, '/dashboard',  // replace to /profile_setup
+          print("Navigating to edit profile");
+          Navigator.pushNamed(context, '/profile_setup',  // replace to /profile_setup
                   arguments: userCredential.user!.uid)
               .then((value) {
             // After returning from edit profile, navigate to the dashboard
             if (value != null && value == true) {
+              print("Navigating to dashboard");
               Navigator.pushReplacementNamed(context, '/dashboard');
             }
           });
         } else {
-          // Navigate to the next screen
+          // User profile exists
+          print("User profile exists, Navigating to dashboard");
           Navigator.pushReplacementNamed(context, '/dashboard');
         }
       } else {
@@ -104,7 +107,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
         //put this in another class since so many will use it
         title: SizedBox(
           height: kToolbarHeight,
-          child: Center(child: Image.asset('assets/UST_LOGO_NO_TEXT_300.png')),
+          child: Center(child: Image.asset('assets/UST_LOGO_NO_TEXT.png')),
         ),
         backgroundColor: Colors.black,
       ),

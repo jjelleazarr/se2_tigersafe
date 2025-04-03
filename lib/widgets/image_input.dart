@@ -15,7 +15,7 @@ class ImageInput extends StatefulWidget {
 }
 
 class _ImageInputState extends State<ImageInput> {
-  List<File> _selectedMedia = [];
+  final List<File> _selectedMedia = [];
 
   // 📌 Capture Photo from Camera
   Future<void> _takePicture() async {

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/controllers/manage_accounts_controller.dart';
 
 class ManageAccountsScreen extends StatefulWidget {
+  const ManageAccountsScreen({super.key});
+
   @override
   _ManageAccountsScreenState createState() => _ManageAccountsScreenState();
 }
@@ -202,5 +204,5 @@ class _ManageAccountsScreenState extends State<ManageAccountsScreen> {
 // Helper to capitalize the first letter
 extension StringCasingExtension on String {
   String capitalize() =>
-      this.isNotEmpty ? "${this[0].toUpperCase()}${substring(1)}" : "";
+      isNotEmpty ? "${this[0].toUpperCase()}${substring(1)}" : "";
 }

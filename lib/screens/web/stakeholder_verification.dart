@@ -6,6 +6,8 @@ class StakeholderVerificationScreen extends StatelessWidget {
     {"name": "Victor Sullivan", "role": "Staff"},
   ];
 
+  StakeholderVerificationScreen({super.key});
+
   void _verifyRequest(BuildContext context, int index) {
     showDialog(
       context: context,

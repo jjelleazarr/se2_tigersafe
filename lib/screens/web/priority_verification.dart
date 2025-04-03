@@ -6,6 +6,8 @@ class PriorityVerificationScreen extends StatelessWidget {
     {"name": "Bradley Bradshaw", "role": "Security"},
   ];
 
+  PriorityVerificationScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(

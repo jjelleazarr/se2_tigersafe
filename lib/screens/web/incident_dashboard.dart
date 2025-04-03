@@ -16,8 +16,8 @@ class IncidentDashboardScreen extends StatelessWidget {
     final querySnapshot = await FirebaseFirestore.instance.collection('reports').get();
     final querySnapshot2 = await FirebaseFirestore.instance.collection('users').get();
     List<Map<String, dynamic>> reports = [];
-    for (var doc in querySnapshot.docs) {
-      var data1 = doc.data();
+    for (var doc1 in querySnapshot.docs) {
+      var data1 = doc1.data();
       String createdBy = data1['created_by'];
       List<dynamic> mediaUrls = data1['media_urls'];
       for (var doc in querySnapshot2.docs) {
@@ -29,7 +29,9 @@ class IncidentDashboardScreen extends StatelessWidget {
             "description": data1['description'],
             "timestamp": data1['timestamp'].toDate(),
             "media_urls": mediaUrls,
-            "profile_url": data['profile_url']
+            "profile_url": data['profile_image_url'],
+            "report_status": data1['status'],
+            "report_id": doc1.id
           });
         }
       }
@@ -106,7 +108,9 @@ class IncidentDashboardScreen extends StatelessWidget {
                                 description: report['description'],
                                 reporter: report['reporter'],
                                 timestamp: report['timestamp'],
-                                profileUrl: report['profile_url']
+                                profileUrl: report['profile_url'],
+                                reportStatus: report['report_status'],
+                                reportId: report['report_id'],
                               ),
                             ),
                           );
