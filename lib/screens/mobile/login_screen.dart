@@ -55,6 +55,10 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
     }
   }
 
+  void _accountCreate() async {
+    Navigator.pushNamed(context, '/account_create');
+  }
+
   void _googleSignIn() async {
     try {
       UserCredential? userCredential =
@@ -68,16 +72,19 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
         final userDoc = await _userController.getUser(userCredential.user!.uid);
         if (userDoc == null) {
           // Navigate to profile setup, and pass the user id
-          Navigator.pushNamed(context, '/edit_profile.dart',
+          print("Navigating to edit profile");
+          Navigator.pushNamed(context, '/profile_setup',  // replace to /profile_setup
                   arguments: userCredential.user!.uid)
               .then((value) {
             // After returning from edit profile, navigate to the dashboard
             if (value != null && value == true) {
+              print("Navigating to dashboard");
               Navigator.pushReplacementNamed(context, '/dashboard');
             }
           });
         } else {
-          // Navigate to the next screen
+          // User profile exists
+          print("User profile exists, Navigating to dashboard");
           Navigator.pushReplacementNamed(context, '/dashboard');
         }
       } else {
@@ -100,7 +107,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
         //put this in another class since so many will use it
         title: SizedBox(
           height: kToolbarHeight,
-          child: Center(child: Image.asset('assets/UST_LOGO_NO_TEXT_300.png')),
+          child: Center(child: Image.asset('assets/UST_LOGO_NO_TEXT.png')),
         ),
         backgroundColor: Colors.black,
       ),
@@ -136,12 +143,12 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
                     child: TextFormField(
                       controller: _identificationController,
                       decoration: const InputDecoration(
-                        labelText: 'Identification (UST Email or ID)',
+                        labelText: 'UST Email',
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your UST ID or email';
+                          return 'Please enter your UST email';
                         }
                         return null;
                       },
@@ -177,7 +184,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       OutlinedButton(
-                      onPressed: _login, //Need to route to AccountCreateScreen
+                      onPressed: _accountCreate, //Need to route to AccountCreateScreen
                       style: OutlinedButton.styleFrom(
                       fixedSize: const Size(170, 15), // Set width and height
                       textStyle:
