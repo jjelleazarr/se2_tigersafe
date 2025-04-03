@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:se2_tigersafe/widgets/web/incident_report/video_player.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 
 class AnnouncementBoardScreen extends StatefulWidget {
@@ -9,18 +11,67 @@ class AnnouncementBoardScreen extends StatefulWidget {
 }
 
 class _AnnouncementBoardScreenState extends State<AnnouncementBoardScreen> {
+  String? _creatorName;
+  String? _attachmentHttpUrl;
   final priorityColors = {
     "High": Colors.red,
     "Medium": Colors.orange,
     "Low": Colors.grey,
   };
 
+  final Map<String, String> roleLabels = {
+    "stakeholder": "Stakeholder",
+    "command_center_operator": "Command Center",
+    "command_center_admin": "Command Center",
+    "emergency_response_team": "Emergency Response Team",
+  };
+
+
   DocumentSnapshot? _selectedAnnouncement;
 
-  void _selectAnnouncement(DocumentSnapshot doc) {
+  void _selectAnnouncement(DocumentSnapshot doc) async {
     setState(() {
       _selectedAnnouncement = doc;
+      _creatorName = null;
+      _attachmentHttpUrl = null;
     });
+
+    final data = doc.data() as Map<String, dynamic>;
+    final createdByUid = data['created_by'];
+    final attachmentUrl = data['attachments'];
+
+    // Fetch creator info
+    if (createdByUid != null) {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(createdByUid).get();
+      if (userDoc.exists) {
+        final userData = userDoc.data()!;
+        final fullName = [
+          userData['first_name'] ?? '',
+          userData['middle_name'] ?? '',
+          userData['surname'] ?? ''
+        ].where((part) => part.trim().isNotEmpty).join(' ');
+        setState(() => _creatorName = fullName);
+      }
+    }
+
+    // Get HTTP download URL if it's a gs:// link
+    if (attachmentUrl != null && attachmentUrl.startsWith('gs://')) {
+      try {
+        final ref = FirebaseStorage.instance.refFromURL(attachmentUrl);
+        final url = await ref.getDownloadURL();
+        setState(() {
+          _attachmentHttpUrl = url;
+          print('Image URL (download token): $_attachmentHttpUrl');
+        });
+      } catch (e) {
+        print("Error fetching download URL: $e");
+      }
+    } else if (attachmentUrl != null) {
+      setState(() {
+        _attachmentHttpUrl = attachmentUrl;
+        print('Image URL (raw link): $_attachmentHttpUrl');
+      });
+    }
   }
 
   void _clearSelection() {
@@ -36,7 +87,6 @@ class _AnnouncementBoardScreenState extends State<AnnouncementBoardScreen> {
     final type = data['announcement_type'] ?? 'General';
     final timestamp = (data['timestamp'] as Timestamp?)?.toDate();
     final priority = data['priority'] ?? 'Low';
-    final attachmentUrl = data['attachments'];
 
     return InkWell(
       onTap: () => _selectAnnouncement(doc),
@@ -47,52 +97,39 @@ class _AnnouncementBoardScreenState extends State<AnnouncementBoardScreen> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (attachmentUrl != null)
-              ClipRRect(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                child: Image.network(
-                  attachmentUrl,
-                  fit: BoxFit.cover,
-                  height: 150,
-                  width: double.infinity,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 150,
-                    width: double.infinity,
-                    color: Colors.grey[300],
-                    alignment: Alignment.center,
-                    child: Icon(Icons.broken_image, color: Colors.grey[700], size: 48),
-                  ),
-                )
-              ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("[$type] $title", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                  const SizedBox(height: 8),
-                  Text(content.length > 100 ? content.substring(0, 100) + '...' : content),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => _selectAnnouncement(doc),
-                    child: Text("Read More", style: TextStyle(color: Colors.blue)),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("[$type] $title", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 8),
+              if (timestamp != null)
+                Text(
+                  "Posted on ${DateFormat('yyyy-MM-dd – hh:mm a').format(timestamp)}",
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                ),
+              const SizedBox(height: 8),
+              Text(content.length > 100 ? content.substring(0, 100) + '...' : content),
+              const SizedBox(height: 8),
+              if (_selectedAnnouncement?.id != doc.id)
+                TextButton(
+                  onPressed: () => _selectAnnouncement(doc),
+                  child: Text("Read More", style: TextStyle(color: Colors.blue)),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+
   Widget _buildDetailPanel() {
     if (_selectedAnnouncement == null) return SizedBox();
     final data = _selectedAnnouncement!.data() as Map<String, dynamic>;
-    final attachmentUrl = data['attachments'];
+    final timestamp = (data['timestamp'] as Timestamp?)?.toDate();
+    final title = data['title'] ?? 'No Title';
     return Expanded(
       flex: 3,
       child: Container(
@@ -111,33 +148,56 @@ class _AnnouncementBoardScreenState extends State<AnnouncementBoardScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: Text(
-                      "[${data['announcement_type']}] ${data['title']}",
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                    ),
+                    child: title.isNotEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Text(
+                              "[${data['announcement_type']}] $title",
+                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                            ),
+                          )
+                        : SizedBox(),
                   ),
                   IconButton(icon: Icon(Icons.close), onPressed: _clearSelection),
                 ],
               ),
               const SizedBox(height: 12),
-              Chip(label: Text("Priority: ${data['priority']}")),
+              if (timestamp != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Text(
+                    "Posted on ${DateFormat('yyyy-MM-dd – hh:mm a').format(timestamp)}",
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  ),
+                ),
               const SizedBox(height: 12),
-              if (attachmentUrl != null)
+              Chip(
+                label: Text("Priority: ${data['priority']}"),
+                backgroundColor: priorityColors[data['priority']]?.withOpacity(0.15) ?? Colors.grey[200],
+                labelStyle: TextStyle(
+                  color: priorityColors[data['priority']] ?? Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (_attachmentHttpUrl != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    attachmentUrl,
-                    fit: BoxFit.cover,
-                    height: 150,
-                    width: double.infinity,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 150,
-                      width: double.infinity,
-                      color: Colors.grey[300],
-                      alignment: Alignment.center,
-                      child: Icon(Icons.broken_image, color: Colors.grey[700], size: 48),
-                    ),
-                  )
+                  child: _attachmentHttpUrl!.endsWith('.mp4')
+                      ? VideoPlayerWidget(url: _attachmentHttpUrl!)
+                      : Image.network(
+                          _attachmentHttpUrl!,
+                          fit: BoxFit.cover,
+                          height: 150,
+                          width: double.infinity,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            height: 150,
+                            width: double.infinity,
+                            color: Colors.grey[300],
+                            alignment: Alignment.center,
+                            child: Icon(Icons.broken_image, color: Colors.grey[700], size: 48),
+                          ),
+                        ),
                 ),
               const SizedBox(height: 12),
               Text(data['content'], style: TextStyle(fontSize: 16)),
@@ -154,7 +214,10 @@ class _AnnouncementBoardScreenState extends State<AnnouncementBoardScreen> {
                     children: [
                       Text("Visible To:", style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 6),
-                      ...List<String>.from(data['visibility_scope']).map((role) => Text("- $role")),
+                      ...List<String>.from(data['visibility_scope']).map((role) {
+                        final label = roleLabels[role] ?? role;
+                        return Text("- $label");
+                      }),
                     ],
                   ),
                 ),
@@ -175,6 +238,7 @@ class _AnnouncementBoardScreenState extends State<AnnouncementBoardScreen> {
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
