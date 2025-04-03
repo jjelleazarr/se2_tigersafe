@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:se2_tigersafe/controllers/announcements_controller.dart';
@@ -62,15 +63,22 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
       attachmentUrl = await controller.uploadAttachment(_attachment!.bytes!, _attachment!.name);
     }
 
+    final rawScope = _selectedRoles.expand((role) {
+      if (role == 'command_center') {
+        return ['command_center_operator', 'command_center_admin'];
+      }
+      return [role];
+    }).toList();
+
     final announcement = AnnouncementModel(
       announcementId: '',
       title: _titleController.text,
       content: _descriptionController.text,
-      createdBy: 'admin_id',
+      createdBy: FirebaseAuth.instance.currentUser?.uid ?? 'unknown_user',
       announcementType: _announcementType!,
       priority: _priority!,
       timestamp: Timestamp.now(),
-      visibilityScope: _selectedRoles,
+      visibilityScope: rawScope,
       attachments: attachmentUrl,
     );
 
