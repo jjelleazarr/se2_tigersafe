@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/widgets/widgets_style.dart';
 import 'package:se2_tigersafe/controllers/login_controller.dart';
 import 'package:se2_tigersafe/controllers/users_controller.dart';
+import 'package:se2_tigersafe/controllers/verification_requests_controller.dart';
 import 'package:sign_in_button/sign_in_button.dart';
 
 class MobileLoginScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
   final _passwordController = TextEditingController();
   final LoginController _loginController = LoginController();
   final UserController _userController = UserController();
+  final VerificationRequestsController _verificationController = VerificationRequestsController();
 
   @override
   void dispose() {
@@ -30,26 +32,17 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
     if (_formKey.currentState!.validate()) {
       String username = _identificationController.text;
       String password = _passwordController.text;
-      print("ID: $username, Password: $password");
 
       try {
-        UserCredential? userCredential = await _loginController
-            .loginWithUsernamePassword(username, password, context);
+        UserCredential? userCredential =
+            await _loginController.loginWithUsernamePassword(username, password, context);
 
         if (userCredential != null) {
-          // Login successful
-          print("Login Successful: ${userCredential.user?.uid}");
-          // Navigate to the next screen
           Navigator.pushReplacementNamed(context, '/dashboard');
-        } else {
-          // Login failed
-          print("Login Failed");
         }
       } catch (e) {
-        // Handle any unexpected errors
-        print("Error during login: $e");
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("An unexpected error occured.")),
+          SnackBar(content: Text("An unexpected error occurred.")),
         );
       }
     }
@@ -61,41 +54,42 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
 
   void _googleSignIn() async {
     try {
-      UserCredential? userCredential =
-          await _loginController.loginWithGoogle(context);
+      UserCredential? userCredential = await _loginController.loginWithGoogle(context);
+      if (userCredential == null) return;
 
-      if (userCredential != null) {
-        // Google Sign-in successful
-        print("Google Sign-in Successful: ${userCredential.user?.uid}");
+      final user = userCredential.user;
+      if (user == null) return;
 
-        // Check if the user profile exists, if not, navigate to profile setup
-        final userDoc = await _userController.getUser(userCredential.user!.uid);
-        if (userDoc == null) {
-          // Navigate to profile setup, and pass the user id
-          print("Navigating to edit profile");
-          Navigator.pushNamed(context, '/profile_setup',  // replace to /profile_setup
-                  arguments: userCredential.user!.uid)
-              .then((value) {
-            // After returning from edit profile, navigate to the dashboard
-            if (value != null && value == true) {
-              print("Navigating to dashboard");
-              Navigator.pushReplacementNamed(context, '/dashboard');
-            }
-          });
+      final isUSTEmail = user.email?.endsWith("@ust.edu.ph") ?? false;
+      final userDoc = await _userController.getUser(user.uid);
+
+      if (userDoc != null) {
+        final roles = userDoc.roles;
+        if (roles == 'emergency_response_team' || (roles is List && roles.contains('emergency_response_team'))) {
+          Navigator.pushReplacementNamed(context, '/ert_dashboard');
         } else {
-          // User profile exists
-          print("User profile exists, Navigating to dashboard");
           Navigator.pushReplacementNamed(context, '/dashboard');
         }
-      } else {
-        // Google Sign-in failed
-        print("Google Sign-in Failed");
+        return;
       }
+
+
+      final verificationRequest = await _verificationController.getRequestByUid(user.uid);
+
+      if (verificationRequest != null) {
+        Navigator.pushReplacementNamed(context, '/account_verification');
+        return;
+      }
+
+      if (!isUSTEmail) {
+        Navigator.pushNamed(context, '/profile_setup', arguments: user.uid);
+        return;
+      }
+
+      Navigator.pushNamed(context, '/profile_setup', arguments: user.uid);
     } catch (e) {
-      // Handle any unexpected errors
-      print("Error during Google Sign-in: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("An unexpected error occured.")),
+        SnackBar(content: Text("An unexpected error occurred.")),
       );
     }
   }
@@ -104,7 +98,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        //put this in another class since so many will use it
         title: SizedBox(
           height: kToolbarHeight,
           child: Center(child: Image.asset('assets/UST_LOGO_NO_TEXT.png')),
@@ -114,30 +107,23 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
-                    child: Image.asset('assets/UST_LOGO_WITH_TEXT_300.png'),
-                  ),
+                  Center(child: Image.asset('assets/UST_LOGO_WITH_TEXT_300.png')),
                   const SizedBox(height: 40),
                   AppWidgets.loginTextContainer(
                       'To access TigerSafe, please make sure you meet the following requirements:'),
                   const SizedBox(height: 10),
-                  AppWidgets.loginTextContainer(
-                    '1. UST Google Workspace Personal Account',
-                  ),
+                  AppWidgets.loginTextContainer('1. UST Google Workspace Personal Account'),
                   const SizedBox(height: 20),
                   AppWidgets.loginTextContainer(
-                    '2. Google Authenticator Application \nor\n1. Login with a registered TigerSafe Account',
-                  ),
+                      '2. Google Authenticator Application \nor\n1. Login with a registered TigerSafe Account'),
                   const SizedBox(height: 20),
 
-                  // ID Field
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25.0),
                     child: TextFormField(
@@ -156,12 +142,11 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Password Field
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25.0),
                     child: TextFormField(
                       controller: _passwordController,
-                      obscureText: true, // Hides password input
+                      obscureText: true,
                       decoration: const InputDecoration(
                         labelText: 'Password',
                         border: OutlineInputBorder(),
@@ -179,54 +164,36 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
                   ),
                   const SizedBox(height: 30),
 
-                  // Login Button
-                    Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       OutlinedButton(
-                      onPressed: _accountCreate, //Need to route to AccountCreateScreen
-                      style: OutlinedButton.styleFrom(
-                      fixedSize: const Size(170, 15), // Set width and height
-                      textStyle:
-                        const TextStyle(fontSize: 16, color: Colors.blue),
-                      shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                      ),
-                      side: const BorderSide(
-                        color: Colors.black), // Border color
-                      ),
-                      child: const Text("Create Account",
-                      style: TextStyle(color: Colors.black)), // Text color
+                        onPressed: _accountCreate,
+                        style: OutlinedButton.styleFrom(
+                          fixedSize: const Size(170, 15),
+                          textStyle: const TextStyle(fontSize: 16, color: Colors.blue),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                          side: const BorderSide(color: Colors.black),
+                        ),
+                        child: const Text("Create Account", style: TextStyle(color: Colors.black)),
                       ),
                       OutlinedButton(
-                      onPressed: _login,
-                      style: OutlinedButton.styleFrom(
-                      fixedSize: const Size(170, 15), // Set width and height
-                      textStyle:
-                        const TextStyle(fontSize: 16, color: Colors.blue),
-                      shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                      ),
-                      side: const BorderSide(
-                        color: Colors.black), // Border color
-                      ),
-                      child: const Text("Login",
-                      style: TextStyle(color: Colors.black)), // Text color
+                        onPressed: _login,
+                        style: OutlinedButton.styleFrom(
+                          fixedSize: const Size(170, 15),
+                          textStyle: const TextStyle(fontSize: 16, color: Colors.blue),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                          side: const BorderSide(color: Colors.black),
+                        ),
+                        child: const Text("Login", style: TextStyle(color: Colors.black)),
                       ),
                     ],
-                    ),
-
-                  const SizedBox(height: 15),
-
-                  Center(
-                    child: Text(
-                      'OR', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16,),
-                    ),
                   ),
 
                   const SizedBox(height: 15),
-
-                  Center( //Google Sign Up
+                  Center(child: Text('OR', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+                  const SizedBox(height: 15),
+                  Center(
                     child: SignInButton(
                       Buttons.google,
                       text: "Sign up with Google",
