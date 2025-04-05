@@ -1,254 +1,174 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:se2_tigersafe/controllers/login_controller.dart';
+import 'package:flutter/material.dart';
+import 'package:se2_tigersafe/controllers/verification_requests_controller.dart';
+import 'package:se2_tigersafe/models/verification_requests_collection.dart';
+import 'package:se2_tigersafe/widgets/custom_button.dart';
+import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
 class ProfileSetupScreen extends StatefulWidget {
-  const ProfileSetupScreen({super.key});
-
   @override
-  State<ProfileSetupScreen> createState() {
-    return _ProfileSetupScreenState();
-  }
+  _ProfileSetupScreenState createState() => _ProfileSetupScreenState();
 }
 
 class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
-  final _lastNameController = TextEditingController();
-  final _firstNameController = TextEditingController();
-  final _middleNameController = TextEditingController();
-  final _phoneNumberController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _idNumberController = TextEditingController(); // New controller for ID Number
-  String? _selectedRole;
-  final Map<String, String> _roleLabels = {
-    "stakeholder": "Stakeholder",
-    "emergency_response_team": "ERT Member",
-  };
-  File? _profileImage;
-  final ImagePicker _picker = ImagePicker();
-  final LoginController _loginController = LoginController();
+  final _formKey = GlobalKey<FormState>();
+  final _verificationController = VerificationRequestsController();
 
-  @override
-  void dispose() {
-    _lastNameController.dispose();
-    _firstNameController.dispose();
-    _middleNameController.dispose();
-    _phoneNumberController.dispose();
-    _addressController.dispose();
-    _passwordController.dispose();
-    _idNumberController.dispose(); // Dispose the new controller
-    super.dispose();
-  }
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _middleNameController = TextEditingController();
+  final TextEditingController _surnameController = TextEditingController();
+  final TextEditingController _idNumberController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _phoneNumberController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
 
-  Future<UserCredential?> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _profileImage = File(pickedFile.path);
-      });
-    } else {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser != null && googleUser.photoUrl != null) {
-        setState(() {
-          _profileImage = File(googleUser.photoUrl!);
-        });
-      }
-    }
-    return null;
-  }
+  String? _role;
+  String? _specialization;
+  PlatformFile? _proofOfIdentity;
+  PlatformFile? _profileImage;
 
-  Future<void> _setupProfile() async {
-    if (_lastNameController.text.isEmpty ||
-        _firstNameController.text.isEmpty ||
-        _middleNameController.text.isEmpty ||
-        _phoneNumberController.text.isEmpty ||
-        _addressController.text.isEmpty ||
-        _selectedRole == null ||
-        _passwordController.text.isEmpty ||
-        _idNumberController.text.isEmpty) { // Check if ID Number is empty
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fill in all required fields.')),
-      );
-      return;
-    }
+  bool _isSubmitting = false;
 
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('User not authenticated.')),
-      );
-      return;
-    }
+  Future<void> _submitProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_role == null) return;
+    if (_role == 'emergency_response_team' && (_specialization == null || _proofOfIdentity == null)) return;
 
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    setState(() => _isSubmitting = true);
+
+    String? profileImageUrl;
     if (_profileImage != null) {
-      final ref = FirebaseStorage.instance.ref().child('profile_images').child('${user.uid}.jpg');
-      await ref.putFile(_profileImage!);
+      final profileRef = FirebaseStorage.instance.ref().child('profile_images/${user.uid}_${_profileImage!.name}');
+      await profileRef.putFile(File(_profileImage!.path!));
+      profileImageUrl = await profileRef.getDownloadURL();
     }
 
-    try {
+    final isUST = user.email?.endsWith('@ust.edu.ph') ?? false;
+
+    if (_role == 'stakeholder' && isUST) {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'id_number': _idNumberController.text,
-        'email': user.email ?? '',
-        'surname': _lastNameController.text,
         'first_name': _firstNameController.text,
         'middle_name': _middleNameController.text,
-        'phone_number': _phoneNumberController.text,
+        'surname': _surnameController.text,
+        'id_number': _idNumberController.text,
+        'email': user.email,
         'address': _addressController.text,
-        'roles': _selectedRole ?? 'stakeholder', // Provide default value
+        'phone_number': _phoneNumberController.text,
+        'roles': 'stakeholder',
+        'profile_image_url': profileImageUrl,
         'account_status': 'Active',
-        'profile_image_url': _profileImage,
-        'created_at': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true)); // Use merge to avoid overwriting existing data
-
-      // Update user password
-      await user.updatePassword(_passwordController.text);
-
-      Navigator.pushNamed(context, '/dashboard');
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error setting up profile: $e')),
+        'created_at': Timestamp.now(),
+      });
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } else {
+      final model = VerificationRequestModel(
+        requestId: '',
+        firstName: _firstNameController.text,
+        middleName: _middleNameController.text,
+        surname: _surnameController.text,
+        idNumber: _idNumberController.text,
+        email: user.email ?? '',
+        phoneNumber: _phoneNumberController.text,
+        address: _addressController.text,
+        roles: [_role!],
+        specialization: _specialization ?? '',
+        proofOfIdentity: '',
+        description: _descriptionController.text,
+        accountStatus: 'Pending',
+        submittedBy: user.uid,
+        submittedAt: Timestamp.now(),
+        adminId: null,
+        reviewedAt: null,
       );
+
+      await _verificationController.submitRequest(model, _proofOfIdentity!, profileImageUrl: profileImageUrl);
+
+      Navigator.pushReplacementNamed(context, '/account_verification');
+    }
+
+    setState(() => _isSubmitting = false);
+  }
+
+  Future<void> _pickProofOfIdentity() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf', 'jpg', 'png']);
+    if (result != null && result.files.single != null) {
+      setState(() => _proofOfIdentity = result.files.single);
+    }
+  }
+
+  Future<void> _pickProfileImage() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result != null && result.files.single != null) {
+      setState(() => _profileImage = result.files.single);
     }
   }
 
   @override
-  Widget build(context) {
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: SizedBox(
-          height: kToolbarHeight,
-          child: Center(child: Image.asset('assets/UST_LOGO_NO_TEXT.png')),
-        ),
-        backgroundColor: Colors.black,
-      ),
+      appBar: AppBar(title: Text('Complete Profile Setup')),
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 40),
-            GestureDetector(
-              onTap: _pickImage,
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
-                child: _profileImage == null ? Icon(Icons.add_a_photo, size: 50) : null,
+        padding: EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(controller: _firstNameController, decoration: InputDecoration(labelText: 'First Name'), validator: (v) => v!.isEmpty ? 'Required' : null),
+              TextFormField(controller: _middleNameController, decoration: InputDecoration(labelText: 'Middle Name')),
+              TextFormField(controller: _surnameController, decoration: InputDecoration(labelText: 'Surname'), validator: (v) => v!.isEmpty ? 'Required' : null),
+              TextFormField(controller: _idNumberController, decoration: InputDecoration(labelText: 'ID Number'), validator: (v) => v!.isEmpty ? 'Required' : null),
+              TextFormField(controller: _addressController, decoration: InputDecoration(labelText: 'Address'), validator: (v) => v!.isEmpty ? 'Required' : null),
+              TextFormField(controller: _phoneNumberController, decoration: InputDecoration(labelText: 'Phone Number'), validator: (v) => v!.isEmpty ? 'Required' : null),
+              Row(
+                children: [
+                  Expanded(child: Text(_profileImage != null ? _profileImage!.name : 'No profile image selected')),
+                  TextButton(onPressed: _pickProfileImage, child: Text('Upload Profile Image')),
+                ],
               ),
-            ),
-            const SizedBox(height: 40),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 25.0),
-              child: TextFormField(
-                controller: _idNumberController, // New text field for ID Number
-                decoration: const InputDecoration(
-                  labelText: 'ID Number',
-                  border: OutlineInputBorder(),
+              DropdownButtonFormField<String>(
+                value: _role,
+                decoration: InputDecoration(labelText: 'Select Role'),
+                items: [
+                  DropdownMenuItem(value: 'stakeholder', child: Text('Stakeholder')),
+                  DropdownMenuItem(value: 'emergency_response_team', child: Text('Emergency Response Team')),
+                ],
+                onChanged: (val) => setState(() => _role = val),
+                validator: (v) => v == null ? 'Required' : null,
+              ),
+              if (_role == 'emergency_response_team') ...[
+                DropdownButtonFormField<String>(
+                  value: _specialization,
+                  decoration: InputDecoration(labelText: 'Specialization'),
+                  items: [
+                    DropdownMenuItem(value: 'medical', child: Text('Medical')),
+                    DropdownMenuItem(value: 'security', child: Text('Security')),
+                    DropdownMenuItem(value: 'others', child: Text('Others')),
+                  ],
+                  onChanged: (val) => setState(() => _specialization = val),
+                  validator: (v) => v == null ? 'Required' : null,
                 ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 25.0),
-              child: TextFormField(
-                controller: _lastNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Last Name',
-                  border: OutlineInputBorder(),
+                TextFormField(controller: _descriptionController, decoration: InputDecoration(labelText: 'Why do you need access?'), validator: (v) => v!.isEmpty ? 'Required' : null),
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(child: Text(_proofOfIdentity != null ? _proofOfIdentity!.name : 'No file selected')),
+                    TextButton(onPressed: _pickProofOfIdentity, child: Text('Upload ID')),
+                  ],
                 ),
+              ],
+              const SizedBox(height: 24),
+              CustomButton(
+                text: _isSubmitting ? 'Submitting...' : 'Submit',
+                onPressed: _isSubmitting ? null : _submitProfile,
               ),
-            ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 25.0),
-              child: TextFormField(
-                controller: _firstNameController,
-                decoration: const InputDecoration(
-                  labelText: 'First Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 25.0),
-              child: TextFormField(
-                controller: _middleNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Middle Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 25.0),
-              child: TextFormField(
-                controller: _phoneNumberController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 25.0),
-              child: TextFormField(
-                controller: _addressController,
-                decoration: const InputDecoration(
-                  labelText: 'Address',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 25.0),
-              child: TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
-                ),
-                obscureText: true,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 25.0),
-              child: DropdownButtonFormField<String>(
-                value: _selectedRole,
-                decoration: const InputDecoration(
-                  labelText: "Select Role",
-                  border: OutlineInputBorder(),
-                ),
-                items: _roleLabels.entries.map((entry) {
-                  return DropdownMenuItem<String>(
-                    value: entry.key,
-                    child: Text(entry.value),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedRole = newValue!;
-                  });
-                },
-              ),
-            ),
-            const SizedBox(height: 30),
-            OutlinedButton(
-              onPressed: _setupProfile,
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                textStyle: const TextStyle(fontSize: 20),
-              ),
-              child: const Text("Submit"),
-            ),
-            const SizedBox(height: 20),
-          ],
+            ],
+          ),
         ),
       ),
     );
