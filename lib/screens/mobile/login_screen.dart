@@ -19,7 +19,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
   final _passwordController = TextEditingController();
   final LoginController _loginController = LoginController();
   final UserController _userController = UserController();
-  final VerificationRequestsController _verificationController = VerificationRequestsController();
+  final VerificationRequestsController _verificationController =
+      VerificationRequestsController();
 
   @override
   void dispose() {
@@ -34,8 +35,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
       String password = _passwordController.text;
 
       try {
-        UserCredential? userCredential =
-            await _loginController.loginWithUsernamePassword(username, password, context);
+        UserCredential? userCredential = await _loginController
+            .loginWithUsernamePassword(username, password, context);
 
         if (userCredential != null) {
           Navigator.pushReplacementNamed(context, '/dashboard');
@@ -54,7 +55,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
 
   void _googleSignIn() async {
     try {
-      UserCredential? userCredential = await _loginController.loginWithGoogle(context);
+      UserCredential? userCredential =
+          await _loginController.loginWithGoogle(context);
       if (userCredential == null) return;
 
       final user = userCredential.user;
@@ -65,7 +67,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
 
       if (userDoc != null) {
         final roles = userDoc.roles;
-        if (roles == 'emergency_response_team' || (roles is List && roles.contains('emergency_response_team'))) {
+        if (roles == 'emergency_response_team' ||
+            (roles is List && roles.contains('emergency_response_team'))) {
           Navigator.pushReplacementNamed(context, '/ert_dashboard');
         } else {
           Navigator.pushReplacementNamed(context, '/dashboard');
@@ -73,8 +76,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
         return;
       }
 
-
-      final verificationRequest = await _verificationController.getRequestByUid(user.uid);
+      final verificationRequest =
+          await _verificationController.getRequestByUid(user.uid);
 
       if (verificationRequest != null) {
         Navigator.pushReplacementNamed(context, '/account_verification');
@@ -107,23 +110,25 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(child: Image.asset('assets/UST_LOGO_WITH_TEXT_300.png')),
+                  Center(
+                      child: Image.asset('assets/UST_LOGO_WITH_TEXT_300.png')),
                   const SizedBox(height: 40),
                   AppWidgets.loginTextContainer(
                       'To access TigerSafe, please make sure you meet the following requirements:'),
                   const SizedBox(height: 10),
-                  AppWidgets.loginTextContainer('1. UST Google Workspace Personal Account'),
+                  AppWidgets.loginTextContainer(
+                      '1. UST Google Workspace Personal Account'),
                   const SizedBox(height: 20),
                   AppWidgets.loginTextContainer(
                       '2. Google Authenticator Application \nor\n1. Login with a registered TigerSafe Account'),
                   const SizedBox(height: 20),
-
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25.0),
                     child: TextFormField(
@@ -141,7 +146,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25.0),
                     child: TextFormField(
@@ -163,35 +167,26 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 30),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      OutlinedButton(
-                        onPressed: _accountCreate,
-                        style: OutlinedButton.styleFrom(
-                          fixedSize: const Size(170, 15),
-                          textStyle: const TextStyle(fontSize: 16, color: Colors.blue),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                          side: const BorderSide(color: Colors.black),
-                        ),
-                        child: const Text("Create Account", style: TextStyle(color: Colors.black)),
+                  Center(
+                    child: OutlinedButton(
+                      onPressed: _login,
+                      style: OutlinedButton.styleFrom(
+                        fixedSize: const Size(215, 15),
+                        textStyle:
+                            const TextStyle(fontSize: 16, color: Colors.blue),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.zero),
+                        side: const BorderSide(color: Colors.black),
                       ),
-                      OutlinedButton(
-                        onPressed: _login,
-                        style: OutlinedButton.styleFrom(
-                          fixedSize: const Size(170, 15),
-                          textStyle: const TextStyle(fontSize: 16, color: Colors.blue),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                          side: const BorderSide(color: Colors.black),
-                        ),
-                        child: const Text("Login", style: TextStyle(color: Colors.black)),
-                      ),
-                    ],
+                      child: const Text("Login",
+                          style: TextStyle(color: Colors.black)),
+                    ),
                   ),
-
                   const SizedBox(height: 15),
-                  Center(child: Text('OR', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+                  Center(
+                      child: Text('OR',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16))),
                   const SizedBox(height: 15),
                   Center(
                     child: SignInButton(
