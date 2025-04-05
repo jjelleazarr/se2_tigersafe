@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 // Mobile screens
 import 'package:se2_tigersafe/screens/mobile/login_screen.dart';
 import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
+import 'package:se2_tigersafe/screens/mobile/ert_dashboard.dart';
 import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
 // import 'package:se2_tigersafe/screens/mobile/hazard_reporting.dart';
 // import 'package:se2_tigersafe/screens/mobile/emergency_personnel.dart';
@@ -74,6 +75,7 @@ class MyApp extends StatelessWidget {
             '/account_create': (context) => AccountCreateScreen(),
             '/account_verification': (context) => AccountVerification(),
             '/dashboard': (context) => DashboardScreen(),
+            '/ert_dashboard': (context) => ERTDashboardScreen(),
             '/reports': (context) => ReportsListScreen(),
             '/profile_setup': (context) => ProfileSetupScreen(),
               // '/hazard_reporting': (context) => IncidentReportingScreen(),
