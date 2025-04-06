@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:se2_tigersafe/screens/mobile/emergency_call.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 
@@ -81,9 +83,6 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
     );
   }
 
-
-
-
   Widget _buildFunctionCard(String title, String subtitle, IconData icon, String count, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap, // Handle navigation
@@ -120,32 +119,39 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
     );
   }
 
-
   Widget _buildEmergencyReportsSection() {
-    List<String> emergencyReports = []; // Start empty, will be populated dynamically
-
-    return emergencyReports.isEmpty
-        ? Center(
-      child: Text(
-        'No Emergency Reports',
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
-      ),
-    )
-        : SingleChildScrollView(
-      scrollDirection: Axis.horizontal, // Allow horizontal scrolling
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: emergencyReports
-            .map((location) => _buildEmergencyCard(location))
-            .toList(),
-      ),
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('emergency').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return const Center(child: Text('Error fetching emergency reports'));
+        }
+        final emergencyReports = snapshot.data?.docs ?? [];
+        return emergencyReports.isEmpty
+            ? Center(
+          child: Text(
+            'No Emergency Reports',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
+          ),
+        )
+            : SingleChildScrollView(
+          scrollDirection: Axis.horizontal, // Allow horizontal scrolling
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: emergencyReports.map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              return _buildEmergencyCard(data);
+            }).toList(),
+          ),
+        );
+      },
     );
   }
 
-
-
-
-  Widget _buildEmergencyCard(String location) {
+  Widget _buildEmergencyCard(Map<String, dynamic> data) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
       child: Container(
@@ -163,10 +169,28 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.red),
             ),
             Text(
-              'Location: $location',
+              '${data['emergency_type']}',
               style: TextStyle(fontSize: 16),
             ),
-            Icon(Icons.phone, size: 40, color: Colors.blue),
+            Text(
+              'Timestamp: ${data['timestamp'].toDate().toString()}',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EmergencyCallScreen(
+                      channelName: '${data['channel_name']}',
+                      emergencyType: '${data['emergency_type']}'
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Join Call'),
+            ),
           ],
         ),
       ),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:se2_tigersafe/screens/mobile/emergency_precall.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_left.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:se2_tigersafe/screens/mobile/incident_reporting.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -47,36 +49,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
       endDrawer: DashboardDrawerRight(onSelectScreen: _setScreen),
       body: SafeArea(
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _reportingButton(
-                icon: Icons.phone,
-                iconColor: Colors.black,
-                text: "Emergency",
-                textColor: Colors.red,
-                subText: "Reporting",
-              ),
-              const SizedBox(height: 20),
-              _reportingButton(
-                icon: Icons.assignment,
-                iconColor: Colors.black,
-                text: "Incident",
-                textColor: Color(0xFFFEC00F),
-                subText: "Reporting",
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const IncidentReportingScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
-              _videoThumbnail(_controller1),
-              const SizedBox(height: 10),
-              _videoThumbnail(_controller2),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _reportingButton(
+                  icon: Icons.phone,
+                  iconColor: Colors.black,
+                  text: "Emergency",
+                  textColor: Colors.red,
+                  subText: "Reporting",
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const EmergencyPrecallScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+                _reportingButton(
+                  icon: Icons.assignment,
+                  iconColor: Colors.black,
+                  text: "Incident",
+                  textColor: Color(0xFFFEC00F),
+                  subText: "Reporting",
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const IncidentReportingScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+                _videoThumbnail(_controller1),
+                const SizedBox(height: 10),
+                _videoThumbnail(_controller2),
+              ],
+            ),
           ),
         ),
       ),
@@ -175,14 +186,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _showVideoDialog(YoutubePlayerController controller) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          content: YoutubePlayer(controller: controller),
-        );
-      },
-    );
+    setState(() {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            content: YoutubePlayer(controller: controller),
+          );
+        },
+      );
+    });
   }
 
   @override
