@@ -52,32 +52,33 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       initialRoute: '/',
-       routes: //kIsWeb
-      //     ? {
-      //   // Web Routing
-      //   '/': (context) => WebLoginScreen(),
-      //   '/dashboard': (context) => WebDashboardScreen(),
-      //   '/incident_report': (context) => IncidentDashboardScreen(),
-      //   // '/hazard_reporting': (context) => HazardReportingScreen(),
-      //   // '/response_teams': (context) => EmergencyPersonnelScreen(),
-      //   '/report_logging': (context) => ReportLoggingScreen(),
-      //   // '/announcement_board': (context) => AnnouncementBoardScreen(),
-      //   '/account_management': (context) => AccountManagementScreen(),
-      //   '/manage_accounts': (context) => ManageAccountsScreen(),
-      //   '/stakeholder_verification': (context) => StakeholderVerificationScreen(),
-      //   '/priority_verification': (context) => PriorityVerificationScreen(),
-      //   '/incident_dashboard': (context) => IncidentDashboardScreen(),
-      // }
-           {
+       routes: kIsWeb
+           ? {
+         // Web Routing
+        '/': (context) => WebLoginScreen(),
+         '/dashboard': (context) => WebDashboardScreen(),
+         '/incident_report': (context) => IncidentDashboardScreen(),
+         // '/hazard_reporting': (context) => HazardReportingScreen(),
+         // '/response_teams': (context) => EmergencyPersonnelScreen(),
+         '/report_logging': (context) => ReportLoggingScreen(),
+         // '/announcement_board': (context) => AnnouncementBoardScreen(),
+         '/account_management': (context) => AccountManagementScreen(),
+         '/manage_accounts': (context) => ManageAccountsScreen(),
+         '/stakeholder_verification': (context) => StakeholderVerificationScreen(),
+         '/priority_verification': (context) => PriorityVerificationScreen(),
+         '/incident_dashboard': (context) => IncidentDashboardScreen(),
+        }
+           :
+       {
         // Mobile Routing
         '/': (context) => MobileLoginScreen(),
         '/login_screen': (context) => MobileLoginScreen(),
         '/account_create': (context) => AccountCreateScreen(),
         '/account_verification': (context) => AccountVerification(),
-        '/dashboard': (context) => ERTDashboardScreen(),
+        '/dashboard': (context) => DashboardScreen(),
         '/reports': (context) => ReportsListScreen(),
         '/profile_setup': (context) => ProfileSetupScreen(),
-        // '/hazard_reporting': (context) => IncidentReportingScreen(),
+         '/hazard_reporting': (context) => IncidentReportingScreen(),
         // '/response_teams': (context) => EmergencyPersonnelScreen(),
         // '/report_logging': (context) => ReportLoggingScreen(),
         // '/announcement_board': (context) => AnnouncementBoardScreen(),
