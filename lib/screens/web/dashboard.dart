@@ -16,7 +16,6 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
   String? _userRole;
   bool _isLoading = true;
 
-
   @override
   void initState() {
     super.initState();
@@ -24,15 +23,15 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
   }
 
   Future<void> _fetchUserRole() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user != null) {
-    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-    setState(() {
-      _userRole = doc['roles'];
-      _isLoading = false;
-    });
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      setState(() {
+        _userRole = doc['roles'];
+        _isLoading = false;
+      });
+    }
   }
-}
 
   @override
   void dispose() {
@@ -43,7 +42,7 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
   void _setScreen(String identifier) {
     if (identifier == 'filters') {
     } else {
-      Navigator.of(context).pop(); 
+      Navigator.of(context).pop();
     }
   }
 
@@ -58,112 +57,53 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
     return Scaffold(
       appBar: DashboardAppBar(),
       endDrawer: DashboardDrawerRight(onSelectScreen: _setScreen),
-      body: Padding(
+      body: SingleChildScrollView(
+        controller: _scrollController,
         padding: const EdgeInsets.all(20.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 200, child: _buildMainFunctionsSection(context)),
-            const SizedBox(height: 30),
-            SizedBox(height: 150, child: _buildEmergencyReportsSection()),
+            _buildMainFunctionsSection(context),
+            const SizedBox(height: 60),
+            _buildEmergencyReportsSection(),
           ],
         ),
       ),
     );
   }
 
-    Widget _buildMainFunctionsSection(BuildContext context) {
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildFunctionCard('Incident', 'Reporting', Icons.assignment, '6',
-                () => Navigator.pushNamed(context, '/incident_report')),
-            _buildFunctionCard('Response', 'Teams', Icons.medical_services, '',
-                () => Navigator.pushNamed(context, '/response_teams')),
-            _buildFunctionCard('Report', 'Logging', Icons.insert_chart, '',
-                () => Navigator.pushNamed(context, '/report_logging')),
-            _buildFunctionCard('Announcements', 'Board', Icons.campaign, '',
-                () => Navigator.pushNamed(context, '/announcement_board')),
-            if (_userRole == 'command_center_admin')
-              _buildFunctionCard('Manage', 'Accounts', Icons.manage_accounts, '',
-                  () => Navigator.pushNamed(context, '/account_management')),
-          ],
-        ),
-      );
-    }
-
-
-
-
+  Widget _buildMainFunctionsSection(BuildContext context) {
+    return Center(
+      child: Wrap(
+        spacing: 20,
+        runSpacing: 20,
+        children: [
+          _buildFunctionCard('Incident', 'Reporting', Icons.assignment, '6',
+              () => Navigator.pushNamed(context, '/incident_report')),
+          _buildFunctionCard('Response', 'Teams', Icons.medical_services, '',
+              () => Navigator.pushNamed(context, '/response_teams')),
+          _buildFunctionCard('Report', 'Logging', Icons.insert_chart, '',
+              () => Navigator.pushNamed(context, '/report_logging')),
+          _buildFunctionCard('Announcements', 'Board', Icons.campaign, '',
+              () => Navigator.pushNamed(context, '/announcement_board')),
+          if (_userRole == 'command_center_admin')
+            _buildFunctionCard('Manage', 'Accounts', Icons.manage_accounts, '',
+                () => Navigator.pushNamed(context, '/account_management')),
+        ],
+      ),
+    );
+  }
 
   Widget _buildFunctionCard(String title, String subtitle, IconData icon, String count, VoidCallback onTap) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double cardWidth = screenWidth > 600 ? 260 : screenWidth * 0.7; // Adjust for the card width, lower values to make smaller and vice versa
+
     return GestureDetector(
-      onTap: onTap, // Handle navigation
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-        child: Container(
-          width: 250,
-          height: 150,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.black),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                title,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFFFEC00F)),
-              ),
-              Text(
-                subtitle,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-              ),
-              Icon(icon, size: 40, color: Colors.blue),
-              if (count.isNotEmpty)
-                Text(
-                  count,
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-
-  Widget _buildEmergencyReportsSection() {
-    List<String> emergencyReports = []; // Start empty, will be populated dynamically
-
-    return emergencyReports.isEmpty
-        ? Center(
-            child: Text(
-              'No Emergency Reports',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
-            ),
-          )
-        : SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: emergencyReports
-                  .map((location) => _buildEmergencyCard(location))
-                  .toList(),
-            ),
-          );
-  }
-
-
-
-
-  Widget _buildEmergencyCard(String location) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+      onTap: onTap,
       child: Container(
-        width: 250,
+        width: cardWidth,
         height: 150,
+        margin: const EdgeInsets.symmetric(horizontal: 10.0),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.black),
           borderRadius: BorderRadius.circular(10),
@@ -172,16 +112,69 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Emergency',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.red),
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFFFEC00F)),
             ),
             Text(
-              'Location: $location',
-              style: TextStyle(fontSize: 16),
+              subtitle,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
-            Icon(Icons.phone, size: 40, color: Colors.blue),
+            Icon(icon, size: 40, color: Colors.blue),
+            if (count.isNotEmpty)
+              Text(
+                count,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmergencyReportsSection() {
+    List<String> emergencyReports = []; // Replace with Firebase data
+
+    return emergencyReports.isEmpty
+        ? Center(
+            child: Text(
+              'No Emergency Reports',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
+            ),
+          )
+        : Wrap(
+            spacing: 20,
+            runSpacing: 20,
+            children: emergencyReports
+                .map((location) => _buildEmergencyCard(location))
+                .toList(),
+          );
+  }
+
+  Widget _buildEmergencyCard(String location) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double cardWidth = screenWidth > 600 ? 250 : screenWidth * 0.9;
+
+    return Container(
+      width: cardWidth,
+      height: 150,
+      margin: const EdgeInsets.symmetric(horizontal: 10.0),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.black),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            'Emergency',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.red),
+          ),
+          Text(
+            'Location: $location',
+            style: const TextStyle(fontSize: 16),
+          ),
+          const Icon(Icons.phone, size: 40, color: Colors.blue),
+        ],
       ),
     );
   }
