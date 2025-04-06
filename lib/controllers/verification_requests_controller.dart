@@ -11,32 +11,40 @@ class VerificationRequestsController {
   /// Submit a new verification request using the model object
   Future<void> submitRequest(
     VerificationRequestModel request,
-    PlatformFile proofFile, {
-    String? profileImageUrl,
+    PlatformFile? proofFile, {
+    PlatformFile? profileImage,
   }) async {
     try {
-      // Upload file to Firebase Storage
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('proof_of_identity/${DateTime.now().millisecondsSinceEpoch}_${proofFile.name}');
-      await storageRef.putFile(File(proofFile.path!));
-      final fileUrl = await storageRef.getDownloadURL();
-
-      // Convert model to JSON and inject uploaded file URL and optional profile image
       final data = request.toJson();
-      data['proof_of_identity'] = fileUrl;
 
-      if (profileImageUrl != null) {
-        data['profile_image_url'] = profileImageUrl;
+      // Upload proof of identity if provided
+      if (proofFile != null && proofFile.path != null && proofFile.path!.isNotEmpty) {
+        final proofRef = FirebaseStorage.instance
+            .ref()
+            .child('proof_of_identity/${DateTime.now().millisecondsSinceEpoch}_${proofFile.name}');
+        await proofRef.putFile(File(proofFile.path!));
+        final fileUrl = await proofRef.getDownloadURL();
+        data['proof_of_identity'] = fileUrl;
       }
 
-      // Save request to Firestore
+      // Upload profile image if provided
+      if (profileImage != null && profileImage.path != null && profileImage.path!.isNotEmpty) {
+        final profileRef = FirebaseStorage.instance
+            .ref()
+            .child('profile_images/${DateTime.now().millisecondsSinceEpoch}_${profileImage.name}');
+        await profileRef.putFile(File(profileImage.path!));
+        final profileUrl = await profileRef.getDownloadURL();
+        data['profile_image_url'] = profileUrl;
+      }
+
+      // Save to Firestore
       await _verificationRef.add(data);
     } catch (e) {
       print('Error submitting verification request: $e');
       rethrow;
     }
   }
+
 
   /// Get a single verification request by Firebase UID
   Future<VerificationRequestModel?> getRequestByUid(String uid) async {
