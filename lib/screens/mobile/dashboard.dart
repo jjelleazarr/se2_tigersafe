@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:se2_tigersafe/screens/mobile/emergency_precall.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_left.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
@@ -8,6 +9,7 @@ import 'package:se2_tigersafe/guides/cpr_guide.dart';
 import 'package:se2_tigersafe/guides/emergency_guide.dart';
 import 'package:se2_tigersafe/guides/fire_safety_guide.dart';
 import 'package:se2_tigersafe/guides/mental_health_guide.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -71,6 +73,13 @@ class DashboardScreen extends StatelessWidget {
                   text: "Emergency",
                   textColor: Colors.red,
                   subText: "Reporting",
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const EmergencyPrecallScreen(),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 20),
                 _reportingButton(

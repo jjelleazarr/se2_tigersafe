@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:se2_tigersafe/screens/mobile/emergency_call.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 
@@ -137,52 +138,79 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
   }
 
   Widget _buildEmergencyReportsSection() {
-    List<String> emergencyReports = []; // Replace with Firebase data
-
-    return emergencyReports.isEmpty
-        ? Center(
-            child: Text(
-              'No Emergency Reports',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
-            ),
-          )
-        : Wrap(
-            spacing: 20,
-            runSpacing: 20,
-            children: emergencyReports
-                .map((location) => _buildEmergencyCard(location))
-                .toList(),
-          );
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('emergency').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return const Center(child: Text('Error fetching emergency reports'));
+        }
+        final emergencyReports = snapshot.data?.docs ?? [];
+        return emergencyReports.isEmpty
+            ? Center(
+          child: Text(
+            'No Emergency Reports',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
+          ),
+        )
+            : SingleChildScrollView(
+          scrollDirection: Axis.horizontal, // Allow horizontal scrolling
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: emergencyReports.map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              return _buildEmergencyCard(data);
+            }).toList(),
+          ),
+        );
+      },
+    );
   }
 
-  Widget _buildEmergencyCard(String location) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
-
-    double cardWidth = screenWidth > 600 ? 250 : screenWidth * 0.9;
-    double cardHeight = screenHeight > 800 ? 150 : screenHeight * 0.18;
-
-    return Container(
-      width: cardWidth,
-      height: cardHeight,
-      margin: const EdgeInsets.symmetric(horizontal: 10.0),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.black),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            'Emergency',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.red),
-          ),
-          Text(
-            'Location: $location',
-            style: const TextStyle(fontSize: 16),
-          ),
-          const Icon(Icons.phone, size: 40, color: Colors.blue),
-        ],
+  Widget _buildEmergencyCard(Map<String, dynamic> data) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+      child: Container(
+        width: 250,
+        height: 150,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.black),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Emergency',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.red),
+            ),
+            Text(
+              '${data['emergency_type']}',
+              style: TextStyle(fontSize: 16),
+            ),
+            Text(
+              'Timestamp: ${data['timestamp'].toDate().toString()}',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EmergencyCallScreen(
+                      channelName: '${data['channel_name']}',
+                      emergencyType: '${data['emergency_type']}'
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Join Call'),
+            ),
+          ],
+        ),
       ),
     );
   }
