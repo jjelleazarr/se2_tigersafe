@@ -25,7 +25,7 @@ class AccountDenied extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(Icons.block, size: 75, color: Color(0xFFF00000)),
-                const SizedBox(height: 10),
+                const SizedBox(height: 15),
                 RichText(
                   textAlign: TextAlign.center,
                   text: const TextSpan(

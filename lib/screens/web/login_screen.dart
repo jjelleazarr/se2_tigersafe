@@ -43,7 +43,6 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
           throw 'Only Command Center Personnel can access the web platform.';
         }
 
-        // Route based on role
         routeToDashboard(context);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -53,45 +52,9 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
     }
   }
 
-  // Google Sign-In method, not used in current version.
-  // Future<void> _signInWithGoogle() async {
-  //   try {
-  //     final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-  //     final UserCredential userCredential =
-  //         await FirebaseAuth.instance.signInWithPopup(googleProvider);
-
-  //     final uid = userCredential.user!.uid;
-  //     final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-
-  //     if (!userDoc.exists) {
-  //       throw 'No profile found for this Google user. You may need to register via mobile first.';
-  //     }
-
-  //     final role = userDoc['roles'];
-  //     final status = userDoc['account_status'];
-
-  //     if (status != 'Active') {
-  //       throw 'Account is not active.';
-  //     }
-
-  //     if (role != 'command_center_operator' && role != 'command_center_admin') {
-  //       throw 'Google login is allowed only for Command Center personnel.';
-  //     }
-
-  //     Navigator.pushReplacementNamed(context, '/dashboard');
-  //   } catch (e) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('Google sign-in failed: $e')),
-  //     );
-  //   }
-  // }
-
   void routeToDashboard(BuildContext context) {
     Navigator.pushReplacementNamed(context, '/dashboard');
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -101,24 +64,30 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
           Positioned.fill(
             child: Image.asset('assets/UST-1.jpg', fit: BoxFit.cover),
           ),
-          Align(
-            alignment: Alignment.center,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 20),
-                  child: Text(
-                    'MyUSTe',
-                    style: TextStyle(
-                      fontSize: 75,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFFEC00F),
-                      shadows: [Shadow(offset: Offset(2, 2), blurRadius: 3, color: Colors.black45)],
+          Center(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                bool isWide = constraints.maxWidth > 1000;
+
+                Widget tigerSafeTitle = Padding(
+                  padding: const EdgeInsets.only(bottom: 30, right: 20),
+                  child: RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: 75,
+                        fontWeight: FontWeight.bold,
+                        shadows: [Shadow(offset: Offset(2, 2), blurRadius: 3, color: Colors.black45)],
+                      ),
+                      children: [
+                        TextSpan(text: 'Tiger', style: TextStyle(color: Color(0xFFFEC00F))),
+                        TextSpan(text: 'Safe', style: TextStyle(color: Colors.white)),
+                      ],
                     ),
                   ),
-                ),
-                Container(
+                );
+
+                Widget loginForm = Container(
                   width: 450,
                   padding: const EdgeInsets.all(30),
                   decoration: BoxDecoration(
@@ -168,26 +137,28 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {}, // No implementation yet
+                            onPressed: () {}, // TODO: Implement forgot password
                             child: const Text('Forgot Password?', style: TextStyle(color: Colors.black)),
                           ),
                         ),
                         SizedBox(
                           width: double.infinity,
-                          child: ElevatedButton(
+                          child: OutlinedButton(
                             onPressed: _handleLogin,
-                            child: const Text('Login'),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: Colors.black),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              backgroundColor: Colors.white,
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: const Text(
+                              'Login',
+                              style: TextStyle(color: Colors.black, fontSize: 16),
+                            ),
                           ),
                         ),
-                        // Google Sign-In button (not a part of this version)
-                        // const SizedBox(height: 20),
-                        // SizedBox(
-                        //   width: double.infinity,
-                        //   child: OutlinedButton(
-                        //     onPressed: _signInWithGoogle,
-                        //     child: Text('Sign in with Google', style: TextStyle(color: Colors.black)),
-                        //   ),
-                        // ),
                         const SizedBox(height: 20),
                         const Align(
                           alignment: Alignment.centerLeft,
@@ -209,8 +180,25 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
                       ],
                     ),
                   ),
-                ),
-              ],
+                );
+
+                return isWide
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          tigerSafeTitle,
+                          loginForm,
+                        ],
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          tigerSafeTitle,
+                          loginForm,
+                        ],
+                      );
+              },
             ),
           ),
         ],

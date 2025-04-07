@@ -41,6 +41,7 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
 
   void _setScreen(String identifier) {
     if (identifier == 'filters') {
+      // Future logic for filters
     } else {
       Navigator.of(context).pop();
     }
@@ -94,15 +95,19 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
     );
   }
 
-  Widget _buildFunctionCard(String title, String subtitle, IconData icon, String count, VoidCallback onTap) {
+  Widget _buildFunctionCard(
+      String title, String subtitle, IconData icon, String count, VoidCallback onTap) {
     double screenWidth = MediaQuery.of(context).size.width;
-    double cardWidth = screenWidth > 600 ? 260 : screenWidth * 0.7; // Adjust for the card width, lower values to make smaller and vice versa
+    double screenHeight = MediaQuery.of(context).size.height;
+
+    double cardWidth = screenWidth > 700 ? 400 : screenWidth * 0.9;
+    double cardHeight = screenHeight > 900 ? 200 : screenHeight * 0.2;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: cardWidth,
-        height: 150,
+        height: cardHeight,
         margin: const EdgeInsets.symmetric(horizontal: 10.0),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.black),
@@ -152,11 +157,14 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
 
   Widget _buildEmergencyCard(String location) {
     double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
     double cardWidth = screenWidth > 600 ? 250 : screenWidth * 0.9;
+    double cardHeight = screenHeight > 800 ? 150 : screenHeight * 0.18;
 
     return Container(
       width: cardWidth,
-      height: 150,
+      height: cardHeight,
       margin: const EdgeInsets.symmetric(horizontal: 10.0),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.black),
