@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:se2_tigersafe/screens/web/incident_dashboard.dart';
+import 'package:se2_tigersafe/models/verification_requests_collection.dart';
 import 'core/firebase_options.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -29,6 +30,8 @@ import 'package:se2_tigersafe/screens/web/create_announcement.dart';
 import 'package:se2_tigersafe/screens/web/account_management.dart';
 import 'package:se2_tigersafe/screens/web/manage_accounts.dart';
 import 'package:se2_tigersafe/screens/web/stakeholder_verification.dart';
+import 'package:se2_tigersafe/screens/web/stakeholder_verification_details.dart';
+import 'package:se2_tigersafe/screens/web/stakeholder_verification_action.dart';
 import 'package:se2_tigersafe/screens/web/priority_verification.dart';
 
 void main() async {
@@ -83,6 +86,22 @@ class MyApp extends StatelessWidget {
               // '/report_logging': (context) => ReportLoggingScreen(),
               // '/announcement_board': (context) => AnnouncementBoardScreen(),
             },
+            
+            onGenerateRoute: (settings) {
+              if (settings.name == '/stakeholder_verification_details') {
+                final args = settings.arguments as VerificationRequestModel;
+                return MaterialPageRoute(
+                  builder: (_) => StakeholderVerificationDetailsScreen(request: args),
+                );
+              }
+              if (settings.name == '/stakeholder_verification_action') {
+                final args = settings.arguments as VerificationRequestModel;
+                return MaterialPageRoute(
+                  builder: (_) => ApplicationDeniedScreen(request: args),
+                );
+              }
+              return null;
+      },
     );
   }
 }
