@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 String tokenServerUrl =
-kIsWeb ? 'http://localhost:3000' : 'http://10.0.2.2:3000';
+kIsWeb ? 'http://localhost:3000' : 'http://192.168.1.29:3000';
 
 class EmergencyCallScreen extends StatefulWidget {
   final String channelName;
