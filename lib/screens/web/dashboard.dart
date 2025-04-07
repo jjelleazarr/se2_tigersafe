@@ -26,9 +26,12 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
   Future<void> _fetchUserRole() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+       final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final data = doc.data()!;
+      final roles = List<String>.from(data['roles'] ?? []);
+
       setState(() {
-        _userRole = doc['roles'];
+        _userRole = roles.contains('command_center_admin') ? 'command_center_admin' : null;
         _isLoading = false;
       });
     }

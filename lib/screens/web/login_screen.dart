@@ -36,10 +36,11 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
         if (!userDoc.exists) throw 'User data not found.';
         final data = userDoc.data()!;
         final account_status = data['account_status'];
-        final role = data['roles'];
+        final List roles = List.from(data['roles'] ?? []);
 
         if (account_status != 'Active') throw 'Your account has not been approved yet.';
-        if (role != 'command_center_operator' && role != 'command_center_admin') {
+        if (!roles.contains('command_center_operator') &&
+          !roles.contains('command_center_admin')) {
           throw 'Only Command Center Personnel can access the web platform.';
         }
 
