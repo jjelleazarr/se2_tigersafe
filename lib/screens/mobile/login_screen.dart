@@ -48,7 +48,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
             final accountStatus = userDoc.accountStatus;
 
             if (accountStatus == 'Active') {
-              if (roles == 'emergency_response_team') {
+              final List<String> roles = List<String>.from(userDoc.roles);
+              if (roles.contains('emergency_response_team')) {
                 Navigator.pushReplacementNamed(context, '/ert_dashboard');
               } else {
                 Navigator.pushReplacementNamed(context, '/dashboard');
@@ -76,10 +77,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
     }
   }
 
-  void _accountCreate() async {
-    Navigator.pushNamed(context, '/account_create');
-  }
-
   void _googleSignIn() async {
     try {
       UserCredential? userCredential = await _loginController.loginWithGoogle(context);
@@ -95,7 +92,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
         final roles = userDoc.roles;
 
         if (accountStatus == 'Active') {
-          if (roles == 'emergency_response_team') {
+          final List<String> roles = List<String>.from(userDoc.roles);
+          if (roles.contains('emergency_response_team')) {
             Navigator.pushReplacementNamed(context, '/ert_dashboard');
           } else {
             Navigator.pushReplacementNamed(context, '/dashboard');

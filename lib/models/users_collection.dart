@@ -12,7 +12,7 @@ class UserModel {
   final String? profilePicture;
   final String accountStatus; // Enum: Pending, Active, Denied, Banned
   final DateTime createdAt; // Timestamp
-  final String roles; // Reference to roles collection
+  final List<String> roles;
 
   UserModel({
     required this.userId,
@@ -43,7 +43,7 @@ class UserModel {
       profilePicture: json['profile_picture'],
       accountStatus: json['account_status'],
       createdAt: (json['created_at'] as Timestamp).toDate(),
-      roles: json['roles'],
+      roles: List<String>.from(json['roles'] ?? []),
     );
   }
 
@@ -60,7 +60,7 @@ class UserModel {
       'profile_picture': profilePicture,
       'account_status': accountStatus,
       'created_at': Timestamp.fromDate(createdAt),
-      'roles': roles, // Reference to roles
+      'roles': roles,
     };
   }
 }
