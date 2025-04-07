@@ -39,13 +39,13 @@ class _MediaViewerState extends State<MediaViewer> {
               Center(
                 child: media['type'] == 'image'
                     ? Image.network(
-                        media['url']!,
-                        fit: BoxFit.contain,
-                      )
+                  media['url']!,
+                  fit: BoxFit.contain,
+                )
                     : AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: VideoPlayerWidget(url: media['url']!),
-                      ),
+                  aspectRatio: 16 / 9,
+                  child: VideoPlayerWidget(url: media['url']!),
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
@@ -90,18 +90,18 @@ class _MediaViewerState extends State<MediaViewer> {
                         child: type == 'image'
                             ? Image.network(url!, fit: BoxFit.cover)
                             : const Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.play_circle_fill,
-                                        size: 40, color: Colors.black54),
-                                    SizedBox(height: 4),
-                                    Text("Video Preview",
-                                        style:
-                                            TextStyle(color: Colors.black54)),
-                                  ],
-                                ),
-                              ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.play_circle_fill,
+                                  size: 40, color: Colors.black54),
+                              SizedBox(height: 4),
+                              Text("Video Preview",
+                                  style:
+                                  TextStyle(color: Colors.black54)),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   );

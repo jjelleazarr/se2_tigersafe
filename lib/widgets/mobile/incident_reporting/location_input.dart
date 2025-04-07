@@ -20,7 +20,7 @@ class _LocationInputState extends State<LocationInput> {
   void _showPreview(double lat, double lng) {
     final staticMapUrl =
         'https://maps.googleapis.com/maps/api/staticmap?center=$lat,$lng&zoom=16&size=600x300&maptype=roadmap'
-        '&markers=color:red%7Clabel:A%7C$lat,$lng&key=YOUR_GOOGLE_API_KEY';
+        '&markers=color:red%7Clabel:A%7C$lat,$lng&key=AIzaSyAZwpplCjcLReEDnwQGOA0Nruw9WqzPzJ8';
     setState(() => _previewImageUrl = staticMapUrl);
   }
 
@@ -57,12 +57,6 @@ class _LocationInputState extends State<LocationInput> {
         onPressed: _getCurrentLocation,
       ),
       const SizedBox(width: 10, height: 10),
-      TextButton.icon(
-        icon: const Icon(Icons.map, color: Color(0xFFFEC00F)),
-        label: const Text('Select on Map', style: TextStyle(color: Color(0xFFFEC00F))),
-        style: TextButton.styleFrom(backgroundColor: Colors.black),
-        onPressed: _selectOnMap,
-      ),
     ];
   }
 
@@ -92,3 +86,4 @@ class _LocationInputState extends State<LocationInput> {
     );
   }
 }
+
