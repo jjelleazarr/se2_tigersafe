@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,12 +26,17 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   String? _role;
   String? _specialization;
   PlatformFile? _proofOfIdentity;
   PlatformFile? _profileImage;
+
   bool _isSubmitting = false;
+  bool _showPassword = false;
+  bool _showConfirmPassword = false;
 
   Future<void> _submitProfile() async {
     if (!_formKey.currentState!.validate()) return;
@@ -42,15 +46,17 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     if (user == null) return;
 
     final isUSTEmail = user.email!.endsWith('@ust.edu.ph');
-
     setState(() => _isSubmitting = true);
 
-    String? profileImageUrl;
-    if (_profileImage != null) {
-      final profileRef = FirebaseStorage.instance
-          .ref('profile_images/${DateTime.now().millisecondsSinceEpoch}_${_profileImage!.name}');
-      await profileRef.putFile(File(_profileImage!.path!));
-      profileImageUrl = await profileRef.getDownloadURL();
+    // Bind password to Google account via FirebaseAuth
+    try {
+      final email = user.email!;
+      final password = _passwordController.text;
+
+      final credential = EmailAuthProvider.credential(email: email, password: password);
+      await user.linkWithCredential(credential);
+    } catch (e) {
+      print('Error linking email/password to Google account: $e');
     }
 
     if (_role == 'stakeholder' && isUSTEmail) {
@@ -64,7 +70,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         'phone_number': _phoneNumberController.text,
         'roles': ['stakeholder'],
         'account_status': 'Active',
-        'profile_image_url': profileImageUrl,
         'created_at': Timestamp.now(),
       });
       Navigator.pushReplacementNamed(context, '/dashboard');
@@ -97,15 +102,16 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         submittedAt: Timestamp.now(),
         adminId: null,
         reviewedAt: null,
-        profileImageUrl: profileImageUrl,
+        profileImageUrl: null,
       );
 
       await _verificationController.submitRequest(
         model,
-        _role == 'emergency_response_team' ? _proofOfIdentity! : null,
+        _role == 'emergency_response_team'
+            ? _proofOfIdentity!
+            : PlatformFile(name: '', path: '', size: 0),
         profileImage: _profileImage,
       );
-
 
       Navigator.pushReplacementNamed(context, '/account_verification');
     }
@@ -156,24 +162,16 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               if (!isUSTEmail)
                 Text('Non-UST Email detected. Manual verification required.', style: TextStyle(color: Colors.red)),
 
+              TextFormField(controller: _passwordController, obscureText: !_showPassword, decoration: InputDecoration(labelText: 'Create Password', suffixIcon: IconButton(icon: Icon(_showPassword ? Icons.visibility : Icons.visibility_off), onPressed: () => setState(() => _showPassword = !_showPassword))), validator: (v) => v!.isEmpty ? 'Required' : null),
+              TextFormField(controller: _confirmPasswordController, obscureText: !_showConfirmPassword, decoration: InputDecoration(labelText: 'Confirm Password', suffixIcon: IconButton(icon: Icon(_showConfirmPassword ? Icons.visibility : Icons.visibility_off), onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword))), validator: (v) => v != _passwordController.text ? 'Passwords do not match' : null),
+
               TextFormField(controller: _firstNameController, decoration: InputDecoration(labelText: 'First Name'), validator: (v) => v!.isEmpty ? 'Required' : null),
               TextFormField(controller: _middleNameController, decoration: InputDecoration(labelText: 'Middle Name')),
               TextFormField(controller: _surnameController, decoration: InputDecoration(labelText: 'Surname'), validator: (v) => v!.isEmpty ? 'Required' : null),
-              TextFormField(
-                controller: _idNumberController,
-                decoration: InputDecoration(labelText: 'ID Number'),
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                validator: (v) => v!.isEmpty ? 'Required' : null,
-              ),
+              TextFormField(controller: _idNumberController, decoration: InputDecoration(labelText: 'ID Number'), keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], validator: (v) => v!.isEmpty ? 'Required' : null),
               TextFormField(controller: _addressController, decoration: InputDecoration(labelText: 'Address'), validator: (v) => v!.isEmpty ? 'Required' : null),
-              TextFormField(
-                controller: _phoneNumberController,
-                decoration: InputDecoration(labelText: 'Phone Number'),
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                validator: (v) => v!.isEmpty ? 'Required' : null,
-              ),
+              TextFormField(controller: _phoneNumberController, decoration: InputDecoration(labelText: 'Phone Number'), keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], validator: (v) => v!.isEmpty ? 'Required' : null),
+
               DropdownButtonFormField<String>(
                 value: _role,
                 decoration: InputDecoration(labelText: 'Select Role'),
@@ -209,7 +207,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               const SizedBox(height: 24),
               CustomButton(
                 text: _isSubmitting ? 'Submitting...' : 'Submit',
-                onPressed: _isSubmitting ? null : () => _submitProfile(),
+                onPressed: _isSubmitting ? null : _submitProfile,
               ),
               const Footer(),
             ],

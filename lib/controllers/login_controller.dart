@@ -78,7 +78,7 @@ class LoginController{
       } else {
         // Handle non-UST email case
         if (context != null) {
-          Navigator.pushNamed(context, '/verification_request', arguments: user.uid);
+          Navigator.pushNamed(context, '/profile_setup', arguments: user.uid);
         }
         return userCredential;
       }
