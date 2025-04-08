@@ -32,7 +32,7 @@ class DashboardDrawerLeft extends StatelessWidget {
                 ),
                 const SizedBox(width: 18),
                 Text(
-                  'Max Verstappen',
+                  'Firstname Surname',
                   style: Theme.of(context).textTheme.titleLarge!.copyWith(
                         color: Colors.white,
                       ),

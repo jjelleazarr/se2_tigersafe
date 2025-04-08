@@ -6,6 +6,8 @@ import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:intl/intl.dart';
 
+import '../../widgets/dashboard_drawer_left.dart';
+
 class WebDashboardScreen extends StatefulWidget {
   const WebDashboardScreen({super.key});
 
@@ -62,6 +64,7 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
 
     return Scaffold(
       appBar: DashboardAppBar(),
+      drawer: DashboardDrawerLeft(onSelectScreen: _setScreen),
       endDrawer: DashboardDrawerRight(onSelectScreen: _setScreen),
       body: SingleChildScrollView(
         controller: _scrollController,
