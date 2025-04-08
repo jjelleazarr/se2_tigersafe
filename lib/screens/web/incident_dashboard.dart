@@ -4,50 +4,86 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:se2_tigersafe/screens/web/incident_report.dart';
 import 'package:intl/intl.dart';
 
-class IncidentDashboardScreen extends StatelessWidget {
+import '../../widgets/dashboard_appbar.dart';
+
+class IncidentDashboardScreen extends StatefulWidget {
   const IncidentDashboardScreen({super.key});
+
+  @override
+  _IncidentDashboardScreenState createState() => _IncidentDashboardScreenState();
+}
+
+class _IncidentDashboardScreenState extends State<IncidentDashboardScreen> {
+  DateTime? _selectedDate;
+  String? _selectedStatus;
+  bool _isAscending = true; // New variable to track sorting order
 
   String formatTimestamp(DateTime timestamp) {
     final DateFormat formatter = DateFormat('MMMM d, y h:mm a');
     return formatter.format(timestamp);
   }
 
-  Future<List<Map<String, dynamic>>> _fetchReports() async {
-    final querySnapshot = await FirebaseFirestore.instance.collection('reports').get();
-    final querySnapshot2 = await FirebaseFirestore.instance.collection('users').get();
-    List<Map<String, dynamic>> reports = [];
-    for (var doc1 in querySnapshot.docs) {
-      var data1 = doc1.data();
-      String createdBy = data1['created_by'];
-      List<dynamic> mediaUrls = data1['media_urls'];
-      for (var doc in querySnapshot2.docs) {
-        if (createdBy == doc.id.toString()) {
-          var data = doc.data();
-          reports.add({
-            "reporter": "${data['first_name']} ${data['surname']}",
-            "location": data1['location'],
-            "description": data1['description'],
-            "timestamp": data1['timestamp'].toDate(),
-            "media_urls": mediaUrls,
-            "profile_url": data['profile_image_url'],
-            "report_status": data1['status'],
-            "report_id": doc1.id
-          });
+  Stream<List<Map<String, dynamic>>> _fetchReports() {
+    return FirebaseFirestore.instance.collection('reports').snapshots().asyncMap((querySnapshot) async {
+      final querySnapshot2 = await FirebaseFirestore.instance.collection('users').get();
+      List<Map<String, dynamic>> reports = [];
+      for (var doc1 in querySnapshot.docs) {
+        var data1 = doc1.data();
+        String createdBy = data1['created_by'];
+        List<dynamic> mediaUrls = data1['media_urls'];
+        for (var doc in querySnapshot2.docs) {
+          if (createdBy == doc.id.toString()) {
+            var data = doc.data();
+            reports.add({
+              "reporter": "${data['first_name']} ${data['surname']}",
+              "location": data1['location'],
+              "description": data1['description'],
+              "timestamp": data1['timestamp'].toDate(),
+              "media_urls": mediaUrls,
+              "profile_url": data['profile_image_url'],
+              "report_status": data1['status'],
+              "report_id": doc1.id
+            });
+          }
         }
       }
-    }
-    return reports;
+      if (_selectedDate != null) {
+        reports = reports.where((report) => report['timestamp'].isAfter(_selectedDate!)).toList();
+      }
+      if (_selectedStatus != null && _selectedStatus!.isNotEmpty) {
+        reports = reports.where((report) => report['report_status'] == _selectedStatus).toList();
+      }
+      reports.sort((a, b) => _isAscending
+          ? a['timestamp'].compareTo(b['timestamp'])
+          : b['timestamp'].compareTo(a['timestamp']));
+      return reports;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: Center(
-            child: Image.asset('assets/UST_LOGO_NO_TEXT.png', height: 40)),
-        automaticallyImplyLeading: false,
+      appBar: const DashboardAppBar(),
+      drawer: Drawer(
+        child: ListView(
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(color: Colors.black),
+              child: Center(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text("Back"),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).maybePop();
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
@@ -75,9 +111,47 @@ class IncidentDashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: 30),
 
+            // Filter Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _isAscending = !_isAscending; // Toggle sorting order
+                    });
+                  },
+                  child: Text(_isAscending ? "Sort by date: Descending" : "Sort by date: Ascending"),
+                ),
+                Row(
+                  children: [
+                    const Text("Sort by report status:"),
+                    const SizedBox(width: 8),
+                    DropdownButton<String>(
+                      hint: const Text("Select Status"),
+                      value: _selectedStatus,
+                      items: <String>['Pending', 'Resolved', 'Dropped', 'Personnel Dispatched']
+                          .map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          _selectedStatus = newValue;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+
             Expanded(
-              child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: _fetchReports(),
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: _fetchReports(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -90,10 +164,10 @@ class IncidentDashboardScreen extends StatelessWidget {
                   return GridView.builder(
                     itemCount: reports.length,
                     gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 300, // ✅ Max width per card
+                      maxCrossAxisExtent: 300,
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
-                      childAspectRatio: 3 / 2, // ✅ Card aspect ratio
+                      childAspectRatio: 3 / 2,
                     ),
                     itemBuilder: (context, index) {
                       final report = reports[index];
@@ -174,3 +248,4 @@ class IncidentDashboardScreen extends StatelessWidget {
     );
   }
 }
+
