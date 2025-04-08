@@ -55,6 +55,7 @@ class _IncidentReportingScreenState extends State<IncidentReportingScreen> {
           incidentType: _selectedIncidentType!,
           description: description,
           media: _selectedMedia,
+          context: context,
 
         ),
       ),
