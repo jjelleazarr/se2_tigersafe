@@ -33,6 +33,8 @@ import 'package:se2_tigersafe/screens/web/stakeholder_verification.dart';
 import 'package:se2_tigersafe/screens/web/stakeholder_verification_details.dart';
 import 'package:se2_tigersafe/screens/web/stakeholder_verification_action.dart';
 import 'package:se2_tigersafe/screens/web/priority_verification.dart';
+import 'package:se2_tigersafe/screens/web/priority_verification_details.dart';
+import 'package:se2_tigersafe/screens/web/priority_verification_action.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -86,7 +88,7 @@ class MyApp extends StatelessWidget {
               // '/report_logging': (context) => ReportLoggingScreen(),
               // '/announcement_board': (context) => AnnouncementBoardScreen(),
             },
-            
+
             onGenerateRoute: (settings) {
               if (settings.name == '/stakeholder_verification_details') {
                 final args = settings.arguments as VerificationRequestModel;
@@ -98,6 +100,19 @@ class MyApp extends StatelessWidget {
                 final args = settings.arguments as VerificationRequestModel;
                 return MaterialPageRoute(
                   builder: (_) => ApplicationDeniedScreen(request: args),
+                );
+              }
+              if (settings.name == '/priority_verification_details') {
+                final args = settings.arguments as VerificationRequestModel;
+                return MaterialPageRoute(
+                  builder: (_) => PriorityVerificationDetailsScreen(request: args),
+                );
+              }
+
+              if (settings.name == '/priority_verification_action') {
+                final args = settings.arguments as VerificationRequestModel;
+                return MaterialPageRoute(
+                  builder: (_) => PriorityApplicationDeniedScreen(request: args),
                 );
               }
               return null;
