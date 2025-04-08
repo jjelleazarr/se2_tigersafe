@@ -29,7 +29,8 @@ class ManageAccountsScreen extends StatelessWidget {
               final doc = docs[index];
               final data = doc.data() as Map<String, dynamic>;
               final fullName = "${data['first_name']} ${data['surname']}";
-              final role = roleLabels[data['roles']] ?? "Unknown";
+              final String singleRole = (data['roles'] as List).isNotEmpty ? data['roles'][0] : 'unknown';
+              final role = roleLabels[singleRole] ?? "Unknown";
               final status = data['account_status'] ?? "Unknown";
 
               return ListTile(
@@ -75,7 +76,7 @@ class ManageAccountsScreen extends StatelessWidget {
     final surnameController = TextEditingController(text: data['surname']);
     final phoneController = TextEditingController(text: data['phone_number']);
     final addressController = TextEditingController(text: data['address']);
-    String role = data['roles']?.toString() ?? "Stakeholder";
+    String role = (data['roles'] as List).isNotEmpty ? data['roles'][0] : 'stakeholder';
     String status = data['account_status']?.toString() ?? "Pending";
 
     showDialog(
@@ -119,7 +120,7 @@ class ManageAccountsScreen extends StatelessWidget {
                   'surname': surnameController.text,
                   'phone_number': phoneController.text,
                   'address': addressController.text,
-                  'roles': role,
+                  'roles': [role],
                   'account_status': status,
                 },
                 context: context,
