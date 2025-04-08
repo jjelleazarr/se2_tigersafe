@@ -25,7 +25,7 @@ class AccountManagementScreen extends StatelessWidget {
                     ),
                     TextSpan(
                       text: 'Management',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.orange),
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFFEC00F)),
                     ),
                   ],
                 ),
