@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "agora-access-token": "^2.0.4",
+    "agora-token-generator": "file:",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0"

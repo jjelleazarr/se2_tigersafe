@@ -137,7 +137,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(child: Image.asset('assets/UST_LOGO_WITH_TEXT_300.png')),
+                  Center(child: Image.asset('assets/Transparent_TigerSafe.png')),
                   const SizedBox(height: 40),
                   AppWidgets.loginTextContainer('To access TigerSafe, please make sure you meet the following requirements:'),
                   const SizedBox(height: 10),
