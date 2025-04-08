@@ -76,8 +76,8 @@ class _ResponseTeamsScreenState extends State<ResponseTeamsScreen> with SingleTi
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Row(
                       children: [
-                        Expanded(child: Text('Name', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold))),
-                        Text('Status', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
+                        Expanded(child: Text('Name', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                        Text('Status', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -146,7 +146,7 @@ class _ResponseTeamsScreenState extends State<ResponseTeamsScreen> with SingleTi
                 children: [
                   TextSpan(
                     text: 'Emergency ',
-                    style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 28),
+                    style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 28),
                   ),
                   TextSpan(
                     text: 'Personnel',

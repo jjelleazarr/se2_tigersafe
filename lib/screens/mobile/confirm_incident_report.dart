@@ -228,4 +228,3 @@ class _ConfirmIncidentReportScreenState extends State<ConfirmIncidentReportScree
     );
   }
 }
-

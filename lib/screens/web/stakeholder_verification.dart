@@ -10,12 +10,24 @@ class StakeholderVerificationScreen extends StatefulWidget {
 
 class _StakeholderVerificationScreenState extends State<StakeholderVerificationScreen> {
   final VerificationRequestsController _controller = VerificationRequestsController();
-  late Future<List<VerificationRequestModel>> _requestsFuture;
+  Future<List<VerificationRequestModel>> _requestsFuture = Future.value([]);
+
+  Future<void> _loadRequests() async {
+    try {
+      final requests = await _controller.getAllRequests();
+      setState(() {
+        _requestsFuture = Future.value(requests);
+      });
+    } catch (e) {
+      print('Error fetching requests after update: $e');
+    }
+  }
+
 
   @override
   void initState() {
     super.initState();
-    _requestsFuture = _controller.getAllRequests();
+    _loadRequests();
   }
 
   void _openDetails(VerificationRequestModel request) {
@@ -23,10 +35,7 @@ class _StakeholderVerificationScreenState extends State<StakeholderVerificationS
       context,
       '/stakeholder_verification_details',
       arguments: request,
-    ).then((_) {
-      // Refresh list after returning from details screen
-      setState(() => _requestsFuture = _controller.getAllRequests());
-    });
+    ).then((_) => _loadRequests());
   }
 
   Widget _buildRequestCard(VerificationRequestModel request) {

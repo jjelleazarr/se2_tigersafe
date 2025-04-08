@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/controllers/verification_requests_controller.dart';
 import 'package:se2_tigersafe/models/verification_requests_collection.dart';
@@ -14,13 +15,41 @@ class StakeholderVerificationDetailsScreen extends StatelessWidget {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
+    // 1. Update verification status to Active
     await _controller.updateRequestStatus(
       requestId: request.requestId,
       newStatus: 'Active',
       adminId: currentUser.uid,
     );
-    Navigator.pop(context);
+
+    // 2. Create users document in Firestore
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(request.submittedBy)
+          .set({
+        'first_name': request.firstName,
+        'middle_name': request.middleName,
+        'surname': request.surname,
+        'id_number': request.idNumber,
+        'email': request.email,
+        'phone_number': request.phoneNumber,
+        'address': request.address,
+        'profile_picture': request.profileImageUrl ?? '',
+        'roles': request.roles,
+        'account_status': 'Active',
+        'created_at': request.submittedAt,
+      });
+
+      Navigator.pushReplacementNamed(context, '/stakeholder_verification');
+    } catch (e) {
+      print('Error creating user document: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error creating user document.')),
+      );
+    }
   }
+
 
   void _rejectRequest(BuildContext context) async {
     final reasons = [
@@ -70,8 +99,12 @@ class StakeholderVerificationDetailsScreen extends StatelessWidget {
                   newStatus: 'Rejected',
                   adminId: currentUser.uid,
                 );
-                Navigator.pop(ctx);
-                Navigator.pop(context);
+                Navigator.pop(ctx); // Close dialog
+                try {
+                  Navigator.pushReplacementNamed(context, '/stakeholder_verification');
+                } catch (e) {
+                  print('Navigation error: $e');
+                }
               },
               child: const Text('Confirm'),
             ),
@@ -80,6 +113,7 @@ class StakeholderVerificationDetailsScreen extends StatelessWidget {
       },
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
