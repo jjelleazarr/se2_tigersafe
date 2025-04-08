@@ -14,9 +14,9 @@ const String emergencyGuideText = '''
 - Evacuate if it's safe after the shaking ends.
 
 🔫 ACTIVE THREAT
-- **Run**: If there's an escape path, evacuate immediately.
-- **Hide**: Lock and block doors, turn off lights, silence phones.
-- **Fight**: As a last resort, attempt to incapacitate the attacker with aggression.
+- Run: If there's an escape path, evacuate immediately.
+- Hide: Lock and block doors, turn off lights, silence phones.
+- Fight: As a last resort, attempt to incapacitate the attacker with aggression.
 
 🚨 GENERAL TIPS
 - Always keep emergency contacts accessible.

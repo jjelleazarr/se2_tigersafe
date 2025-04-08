@@ -141,9 +141,11 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
                   const SizedBox(height: 40),
                   AppWidgets.loginTextContainer('To access TigerSafe, please make sure you meet the following requirements:'),
                   const SizedBox(height: 10),
-                  AppWidgets.loginTextContainer('1. UST Google Workspace Personal Account'),
+                  AppWidgets.loginTextContainer('1. Login with a registered TigerSafe Account'),
                   const SizedBox(height: 20),
-                  AppWidgets.loginTextContainer('2. Google Authenticator Application \nor\n1. Login with a registered TigerSafe Account'),
+                  AppWidgets.loginTextContainer('or'),
+                  const SizedBox(height: 20),
+                  AppWidgets.loginTextContainer('1. UST Google Workspace Personal Account'),
                   const SizedBox(height: 20),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25.0),
