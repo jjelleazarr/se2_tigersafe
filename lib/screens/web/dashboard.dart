@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:se2_tigersafe/screens/mobile/emergency_call.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
+import 'package:intl/intl.dart';
 
 class WebDashboardScreen extends StatefulWidget {
   const WebDashboardScreen({super.key});
@@ -173,12 +174,16 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
   }
 
   Widget _buildEmergencyCard(Map<String, dynamic> data) {
+    final DateTime timestamp = data['timestamp'].toDate();
+    final String formattedTimestamp = DateFormat('MMMM d, y h:mm a').format(timestamp);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
       child: Container(
         width: 250,
         height: 150,
         decoration: BoxDecoration(
+          color: Colors.red[50],
           border: Border.all(color: Colors.black),
           borderRadius: BorderRadius.circular(10),
         ),
@@ -194,11 +199,17 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
               style: TextStyle(fontSize: 16),
             ),
             Text(
-              'Timestamp: ${data['timestamp'].toDate().toString()}',
-              style: TextStyle(fontSize: 16),
+              formattedTimestamp,
+              style: TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 10),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -210,7 +221,8 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
                   ),
                 );
               },
-              child: const Text('Join Call'),
+              child: const Text('Join Call',
+                  style: TextStyle(color: Colors.white, fontSize: 16)),
             ),
           ],
         ),

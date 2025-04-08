@@ -2,8 +2,13 @@ import 'dart:async';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:se2_tigersafe/utilities/AppID.dart';
+import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
+import 'package:se2_tigersafe/widgets/dashboard_drawer_left.dart';
+import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -25,6 +30,9 @@ class _EmergencyCallScreenState extends State<EmergencyCallScreen> {
   bool _localUserJoined = false;
   late RtcEngine _engine;
   bool _isJoined = false; // Track if joined.
+  bool _isMuted = false;
+  bool _isCameraEnabled = true;
+  Offset _localVideoOffset = Offset(20, 20);
 
   // Function to fetch the Agora token from your server
   Future<String?> fetchAgoraToken({
@@ -97,7 +105,7 @@ class _EmergencyCallScreenState extends State<EmergencyCallScreen> {
                 '[onTokenPrivilegeWillExpire] connection: ${connection.toJson()}, token: $token');
             // Implement token renewal here (important for production)
           },
-          onLeaveChannel: (RtcConnection connection, RtcStats stats) {  // listen for leave channel
+          onLeaveChannel: (RtcConnection connection, RtcStats stats)  {  // listen for leave channel
             print("onLeaveChannel: local user left");
             setState(() {
               _isJoined = false; // set to false when the local user leaves the channel
@@ -118,8 +126,8 @@ class _EmergencyCallScreenState extends State<EmergencyCallScreen> {
   Future<void> _joinChannel() async {
     final String? token = await fetchAgoraToken(
       channelName: widget.channelName,
-      uid: 0, // Or your user ID if you have one.
-      role: kIsWeb ? 'subscriber' : 'publisher', //  Important:  Set the correct role ('publisher' or 'subscriber')
+      uid: 0,
+      role: kIsWeb ? 'subscriber' : 'publisher',
     );
 
     if (token != null) {
@@ -148,6 +156,75 @@ class _EmergencyCallScreenState extends State<EmergencyCallScreen> {
     }
   }
 
+  Future<void> _deleteEmergencyData() async {
+    try {
+      final QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('emergency')
+          .where('channel_name', isEqualTo: widget.channelName)
+          .get();
+
+      for (final DocumentSnapshot doc in snapshot.docs) {
+        await doc.reference.delete();
+      }
+    } catch (e) {
+      print('Error deleting emergency data: $e');
+    }
+  }
+
+  void _showCallEndedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Emergency Call'),
+        content: const Text('You have left the call.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pushReplacementNamed('/dashboard');
+             },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onToggleMute() {
+    setState(() {
+      _isMuted = !_isMuted;
+    });
+    _engine.muteLocalAudioStream(_isMuted);
+  }
+
+  void _onToggleCamera() {
+    setState(() {
+      _isCameraEnabled = !_isCameraEnabled;
+    });
+    _engine.enableLocalVideo(_isCameraEnabled);
+  }
+
+  void _onSwitchCamera() {
+    _engine.switchCamera();
+  }
+
+  void _onEndCall() {
+    setState(() {
+      _isMuted = true;
+      _isCameraEnabled = false;
+    });
+    _engine.enableLocalAudio(false);
+    _engine.enableLocalVideo(false);
+
+    if (kIsWeb) {
+      _engine.leaveChannel();
+      _showCallEndedDialog();
+    } else {
+      _engine.leaveChannel();
+      _deleteEmergencyData();
+      _showCallEndedDialog();
+    }
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -163,13 +240,25 @@ class _EmergencyCallScreenState extends State<EmergencyCallScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Emergency Call'),
-      ),
+      appBar: DashboardAppBar(),
       body: Stack(
         children: [
           Center(
             child: _remoteVideo(),
+          ),
+          Positioned(
+            left: _localVideoOffset.dx,
+            top: _localVideoOffset.dy,
+            child: Draggable(
+              feedback: _buildLocalVideoPreview(),
+              childWhenDragging: Container(),
+              onDragEnd: (details) {
+                setState(() {
+                  _localVideoOffset = details.offset;
+                });
+              },
+              child: _buildLocalVideoPreview(),
+            ),
           ),
           Align(
             alignment: Alignment.topLeft,
@@ -188,19 +277,74 @@ class _EmergencyCallScreenState extends State<EmergencyCallScreen> {
               ),
             ),
           ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 48.0),
+              child: Container(
+                width: 300, // Set a fixed width for the card
+                child: Card(
+                  color: Colors.grey.withOpacity(0.7), // Grey color with transparency
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        IconButton(
+                          onPressed: _onToggleMute,
+                          icon: Icon(
+                            _isMuted ? Icons.mic_off : Icons.mic,
+                            color: _isMuted ? Colors.red : Colors.white,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _onToggleCamera,
+                          icon: Icon(
+                            _isCameraEnabled ? Icons.videocam : Icons.videocam_off,
+                            color: _isCameraEnabled ? Colors.white : Colors.red,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _onSwitchCamera,
+                          icon: const Icon(
+                            Icons.switch_camera,
+                            color: Colors.white,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _onEndCall,
+                          icon: const Icon(
+                            Icons.call_end,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
+
   // Display remote user's video
   Widget _remoteVideo() {
     if (_remoteUid != null) {
-      return AgoraVideoView(
-        controller: VideoViewController.remote(
-          rtcEngine: _engine,
-          canvas: VideoCanvas(uid: _remoteUid),
-          connection: RtcConnection(channelId: widget.channelName),
+      return AspectRatio(
+        aspectRatio: kIsWeb ? 9 / 16 : 16 / 9, // Adjust the aspect ratio as needed
+        child: AgoraVideoView(
+          controller: VideoViewController.remote(
+            rtcEngine: _engine,
+            canvas: VideoCanvas(uid: _remoteUid),
+            connection: RtcConnection(channelId: widget.channelName),
+          ),
         ),
       );
     } else {
@@ -215,4 +359,34 @@ class _EmergencyCallScreenState extends State<EmergencyCallScreen> {
       }
     }
   }
+
+  Widget _buildLocalVideoPreview() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: SizedBox(
+        width: 100,
+        height: 150,
+        child: Center(
+          child: _localUserJoined
+              ? _isCameraEnabled
+              ? AgoraVideoView(
+            controller: VideoViewController(
+              rtcEngine: _engine,
+              canvas: const VideoCanvas(uid: 0),
+            ),
+          )
+              : Container(
+            color: Colors.grey,
+            child: const Icon(
+              Icons.person,
+              color: Colors.white,
+              size: 50,
+            ),
+          )
+              : const CircularProgressIndicator(),
+        ),
+      ),
+    );
+  }
 }
+
