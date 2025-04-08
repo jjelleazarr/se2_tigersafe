@@ -78,9 +78,11 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
   }
 
   final List<String> incidentTypes = [
-    'Tree Obstruction',
-    'Fire',
-    'Flood',
+    'Suspicious Activity',
+    'Unsafe Acts',
+    'Minor Injury',
+    'Obstruction',
+    'Structural Damage',
     'Other'
   ];
   final List<String> severityLevels = ['Low', 'Moderate', 'High', 'Critical'];
