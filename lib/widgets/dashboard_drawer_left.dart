@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DashboardDrawerLeft extends StatelessWidget {
   const DashboardDrawerLeft({super.key, required this.onSelectScreen});
 
   final void Function(String identifier) onSelectScreen;
+
+  Future<void> _logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushReplacementNamed('/login_screen');
+  }
 
   @override
   Widget build(context) {
@@ -74,7 +80,7 @@ class DashboardDrawerLeft extends StatelessWidget {
                   ),
             ),
             onTap: () {
-              onSelectScreen('logout');
+              _logout(context);
             },
           ),
         ],
@@ -82,3 +88,4 @@ class DashboardDrawerLeft extends StatelessWidget {
     );
   }
 }
+
