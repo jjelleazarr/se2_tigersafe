@@ -12,6 +12,7 @@ class ConfirmIncidentReportScreen extends StatefulWidget {
   final String incidentType;
   final String description;
   final List<File> media;
+  final dynamic context;
 
   const ConfirmIncidentReportScreen({
     super.key,
@@ -20,6 +21,7 @@ class ConfirmIncidentReportScreen extends StatefulWidget {
     required this.incidentType,
     required this.description,
     required this.media,
+    required this.context
   });
 
   @override
@@ -28,6 +30,7 @@ class ConfirmIncidentReportScreen extends StatefulWidget {
 
 class _ConfirmIncidentReportScreenState extends State<ConfirmIncidentReportScreen> {
   final List<VideoPlayerController> _videoControllers = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -58,6 +61,9 @@ class _ConfirmIncidentReportScreenState extends State<ConfirmIncidentReportScree
   }
 
   Future<void> _submitIncident(BuildContext context) async {
+    setState(() {
+      _isLoading = true;
+    });
     try {
       List<String> mediaUrls = [];
       User? user = FirebaseAuth.instance.currentUser;
@@ -92,6 +98,10 @@ class _ConfirmIncidentReportScreenState extends State<ConfirmIncidentReportScree
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error saving incident: $e")),
       );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -101,7 +111,7 @@ class _ConfirmIncidentReportScreenState extends State<ConfirmIncidentReportScree
       builder: (ctx) => AlertDialog(
         title: const Text('Confirm Report'),
         content: const Text(
-          'Please ensure the information you are submitting is accurate. False reports may lead to disciplinary actions. Do you confirm all details are correct?'
+            'Please ensure the information you are submitting is accurate. False reports may lead to disciplinary actions. Do you confirm all details are correct?'
         ),
         actions: [
           TextButton(
@@ -167,22 +177,22 @@ class _ConfirmIncidentReportScreenState extends State<ConfirmIncidentReportScree
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
                         color: Colors.black12,
-                        width: 120,
-                        height: 200,
+                        width: 200, // Adjusted width
+                        height: 200, // Adjusted height
                         child: isVideo && _videoControllers[index].value.isInitialized
                             ? Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  AspectRatio(
-                                    aspectRatio: _videoControllers[index].value.aspectRatio,
-                                    child: VideoPlayer(_videoControllers[index]),
-                                  ),
-                                  const Icon(Icons.play_circle_fill, size: 40, color: Colors.white70),
-                                ],
-                              )
+                          alignment: Alignment.center,
+                          children: [
+                            AspectRatio(
+                              aspectRatio: _videoControllers[index].value.aspectRatio,
+                              child: VideoPlayer(_videoControllers[index]),
+                            ),
+                            const Icon(Icons.play_circle_fill, size: 40, color: Colors.white70),
+                          ],
+                        )
                             : !isVideo
-                                ? Image.file(file, fit: BoxFit.cover)
-                                : const Center(child: CircularProgressIndicator()),
+                            ? Image.file(file, fit: BoxFit.cover)
+                            : const Center(child: CircularProgressIndicator()),
                       ),
                     ),
                   );
@@ -201,12 +211,17 @@ class _ConfirmIncidentReportScreenState extends State<ConfirmIncidentReportScree
               child: const Text(
                 'SUBMIT REPORT',
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white
                 ),
               ),
             ),
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                child: LinearProgressIndicator(),
+              ),
           ],
         ),
       ),
