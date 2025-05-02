@@ -1,32 +1,50 @@
+// In manage_accounts.dart
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:se2_tigersafe/controllers/manage_accounts_controller.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:se2_tigersafe/widgets/web/manage_accounts/add_account_dialog.dart';
 
-class ManageAccountsScreen extends StatelessWidget {
+class ManageAccountsScreen extends StatefulWidget {
+  @override
+  _ManageAccountsScreenState createState() => _ManageAccountsScreenState();
+}
+
+class _ManageAccountsScreenState extends State<ManageAccountsScreen> {
   final List<String> statusOptions = ["Active", "Pending", "Rejected", "Banned"];
 
   final Map<String, String> roleLabels = {
     "stakeholder": "Stakeholder",
     "command_center_operator": "Command Center Operator",
-    "command_center_admin":"Command Center Admin",
+    "command_center_admin": "Command Center Admin",
     "emergency_response_team": "Emergency Response Team"
   };
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Manage Accounts")),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').snapshots(),
+      appBar: AppBar(title: Text('Manage Accounts')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          showDialog(
+            context: context,
+            builder: (_) => AddAccountDialog(
+              onSubmitted: () => setState(() {}),
+            ),
+          );
+        },
+        icon: Icon(Icons.add),
+        label: Text("Add Account"),
+      ),
+      body: FutureBuilder<QuerySnapshot>(
+        future: FirebaseFirestore.instance.collection('users').get(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+          if (snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text("No accounts found."));
 
-          final docs = snapshot.data!.docs;
-
-          return ListView.builder(
-            itemCount: docs.length,
-            itemBuilder: (context, index) {
-              final doc = docs[index];
+          return ListView(
+            padding: EdgeInsets.all(16),
+            children: snapshot.data!.docs.map((doc) {
               final data = doc.data() as Map<String, dynamic>;
               final fullName = "${data['first_name']} ${data['surname']}";
               final String singleRole = (data['roles'] as List).isNotEmpty ? data['roles'][0] : 'unknown';
@@ -35,6 +53,7 @@ class ManageAccountsScreen extends StatelessWidget {
 
               return ListTile(
                 tileColor: status == "Banned" ? Colors.red.shade100 : null,
+                leading: Icon(Icons.person),
                 title: Text(fullName, style: TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text("Role: $role, Account Status: $status"),
                 trailing: Row(
@@ -47,21 +66,27 @@ class ManageAccountsScreen extends StatelessWidget {
                     IconButton(
                       icon: Icon(Icons.block, color: Colors.orange),
                       onPressed: () async {
-                        final controller = ManageAccountsController();
-                        await controller.updateStatus(doc.id, "Banned", context);
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(doc.id)
+                            .update({'account_status': 'Banned'});
+                        setState(() {});
                       },
                     ),
                     IconButton(
                       icon: Icon(Icons.delete, color: Colors.red),
                       onPressed: () async {
-                        final controller = ManageAccountsController();
-                        await controller.deleteAccount(doc.id, context);
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(doc.id)
+                            .delete();
+                        setState(() {});
                       },
                     ),
                   ],
                 ),
               );
-            },
+            }).toList(),
           );
         },
       ),
@@ -69,8 +94,6 @@ class ManageAccountsScreen extends StatelessWidget {
   }
 
   void _editAccount(BuildContext context, String docId, Map<String, dynamic> data) {
-    final controller = ManageAccountsController();
-
     final firstNameController = TextEditingController(text: data['first_name']);
     final middleNameController = TextEditingController(text: data['middle_name']);
     final surnameController = TextEditingController(text: data['surname']);
@@ -112,20 +135,17 @@ class ManageAccountsScreen extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
           ElevatedButton(
             onPressed: () async {
-              await controller.updateAccountFields(
-                userId: docId,
-                updatedFields: {
-                  'first_name': firstNameController.text,
-                  'middle_name': middleNameController.text,
-                  'surname': surnameController.text,
-                  'phone_number': phoneController.text,
-                  'address': addressController.text,
-                  'roles': [role],
-                  'account_status': status,
-                },
-                context: context,
-              );
+              await FirebaseFirestore.instance.collection('users').doc(docId).update({
+                'first_name': firstNameController.text,
+                'middle_name': middleNameController.text,
+                'surname': surnameController.text,
+                'phone_number': phoneController.text,
+                'address': addressController.text,
+                'roles': [role],
+                'account_status': status,
+              });
               Navigator.pop(context);
+              setState(() {});
             },
             child: Text("Save Changes"),
           ),
