@@ -88,7 +88,7 @@ class _WebDashboardScreenState extends State<WebDashboardScreen> {
         runSpacing: 20,
         children: [
           _buildFunctionCard('Incident', 'Reporting', Icons.assignment, '6', //Needs to be dynamic
-              () => Navigator.pushNamed(context, '/incident_report')),
+              () => Navigator.pushNamed(context, '/incident_dashboard')),
           _buildFunctionCard('Response', 'Teams', Icons.medical_services, '',
               () => Navigator.pushNamed(context, '/response_teams')),
           _buildFunctionCard('Report', 'Logging', Icons.insert_chart, '',

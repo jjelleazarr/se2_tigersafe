@@ -239,29 +239,7 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      appBar: const DashboardAppBar(), // ✅ custom app bar
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            DrawerHeader(
-              decoration: const BoxDecoration(color: Colors.black),
-              child: Center(
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.arrow_back),
-                  label:
-                  const Text("Back"), // Change to route back to dashboard
-                  style:
-                  ElevatedButton.styleFrom(backgroundColor: Colors.amber),
-                  onPressed: () {
-                    Navigator.of(context).pop(); // pop drawer
-                    Navigator.of(context).maybePop(); // pop page
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      appBar: const DashboardAppBar(), 
       endDrawer: DashboardDrawerRight(
         onSelectScreen: (identifier) {
           // You can customize this to handle menu actions
