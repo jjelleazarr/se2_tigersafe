@@ -1,13 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:mime/mime.dart';
-import 'dart:io';
 import 'dart:typed_data';
 import '../models/announcements_collection.dart';
 
 class AnnouncementController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance; 
 
   /// Create a new announcement
   Future<void> createAnnouncement(AnnouncementModel announcement) async {
