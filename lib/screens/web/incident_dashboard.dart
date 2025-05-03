@@ -65,26 +65,6 @@ class _IncidentDashboardScreenState extends State<IncidentDashboardScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: const DashboardAppBar(),
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            DrawerHeader(
-              decoration: const BoxDecoration(color: Colors.black),
-              child: Center(
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text("Back"),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).maybePop();
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
         child: Column(

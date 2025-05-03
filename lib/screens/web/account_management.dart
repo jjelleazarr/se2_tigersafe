@@ -4,55 +4,80 @@ import 'stakeholder_verification.dart';
 import 'priority_verification.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 
-class AccountManagementScreen extends StatelessWidget {
+class AccountManagementScreen extends StatefulWidget {
+  @override
+  _AccountManagementScreenState createState() => _AccountManagementScreenState();
+}
+
+class _AccountManagementScreenState extends State<AccountManagementScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final List<String> tabs = ['Manage Accounts', 'Stakeholder Verification', 'Priority Verification'];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: tabs.length, vsync: this);
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: tabs.length,
       child: Scaffold(
         appBar: const DashboardAppBar(),
         body: Column(
           children: [
-            // Header: Account Management
-            const SizedBox(height: 10),
-            const Center(
+            const SizedBox(height: 16),
+
+            // Styled Header
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: Text.rich(
                 TextSpan(
                   children: [
                     TextSpan(
                       text: 'Account ',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+                      style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 28),
                     ),
                     TextSpan(
                       text: 'Management',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFFEC00F)),
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 10),
 
-            // Tabs
-            const TabBar(
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.black,
-              indicator: BoxDecoration(color: Colors.blue),
-              tabs: [
-                Tab(text: "Manage Accounts"),
-                Tab(text: "Stakeholder Verification"),
-                Tab(text: "Priority Verification"),
-              ],
+            const SizedBox(height: 12),
+
+            // Updated TabBar (like blue underline style)
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 32),
+              child: TabBar(
+                controller: _tabController,
+                tabs: tabs.map((label) => Tab(text: label)).toList(),
+                labelColor: Colors.blue,
+                unselectedLabelColor: Colors.black,
+                indicatorColor: Colors.blue,
+              ),
             ),
 
             // Tab content
             Expanded(
-              child: TabBarView(
-                children: [
-                  ManageAccountsScreen(),
-                  StakeholderVerificationScreen(),
-                  PriorityVerificationScreen(),
-                ],
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 32),
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    ManageAccountsScreen(),
+                    StakeholderVerificationScreen(),
+                    PriorityVerificationScreen(),
+                  ],
+                ),
               ),
             ),
           ],
