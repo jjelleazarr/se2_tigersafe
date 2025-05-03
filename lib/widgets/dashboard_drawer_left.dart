@@ -8,9 +8,16 @@ class DashboardDrawerLeft extends StatelessWidget {
   final void Function(String identifier) onSelectScreen;
 
   Future<void> _logout(BuildContext context) async {
+  try {
     await FirebaseAuth.instance.signOut();
-    Navigator.of(context).pushReplacementNamed('/login_screen');
+
+    Navigator.of(context).pushNamedAndRemoveUntil('/login_screen', (route) => false);
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error logging out: $e')),
+    );
   }
+}
 
   @override
   Widget build(context) {
