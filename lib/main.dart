@@ -23,7 +23,7 @@ import 'package:se2_tigersafe/screens/web/dashboard.dart';
 import 'package:se2_tigersafe/screens/web/emergency_personnel.dart';
 import 'package:se2_tigersafe/screens/web/report_logging.dart';
 import 'package:se2_tigersafe/screens/web/announcement_board.dart';
-import 'package:se2_tigersafe/screens/web/create_announcement.dart';
+import 'package:se2_tigersafe/screens/web/announcement_form.dart';
 import 'package:se2_tigersafe/screens/web/account_management.dart';
 import 'package:se2_tigersafe/screens/web/manage_accounts.dart';
 import 'package:se2_tigersafe/screens/web/stakeholder_verification.dart';
@@ -116,9 +116,9 @@ class MyApp extends StatelessWidget {
                   ? snapshot.data!
                   : Scaffold(body: Center(child: CircularProgressIndicator())),
             ));
-          case '/create_announcement':
+          case '/announcement_form':
             return MaterialPageRoute(builder: (_) => FutureBuilder(
-              future: resolveProtectedRoute(CreateAnnouncementScreen(), ['command_center_admin', 'command_center_operator']),
+              future: resolveProtectedRoute(AnnouncementFormScreen(), ['command_center_admin', 'command_center_operator']),
               builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
                   ? snapshot.data!
                   : Scaffold(body: Center(child: CircularProgressIndicator())),
