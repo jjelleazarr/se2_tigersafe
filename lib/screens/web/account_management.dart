@@ -54,7 +54,6 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> with 
 
             const SizedBox(height: 12),
 
-            // Updated TabBar (like blue underline style)
             Container(
               margin: EdgeInsets.symmetric(horizontal: 32),
               child: TabBar(
