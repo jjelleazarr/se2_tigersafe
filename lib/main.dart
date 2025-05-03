@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:se2_tigersafe/screens/web/incident_dashboard.dart';
 import 'package:se2_tigersafe/models/verification_requests_collection.dart';
 import 'core/firebase_options.dart';
@@ -10,19 +12,14 @@ import 'package:se2_tigersafe/screens/mobile/login_screen.dart';
 import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
 import 'package:se2_tigersafe/screens/mobile/ert_dashboard.dart';
 import 'package:se2_tigersafe/screens/mobile/reports_list.dart';
-// import 'package:se2_tigersafe/screens/mobile/hazard_reporting.dart';
-// import 'package:se2_tigersafe/screens/mobile/emergency_personnel.dart';
-// import 'package:se2_tigersafe/screens/mobile/report_logging.dart';
-// import 'package:se2_tigersafe/screens/mobile/announcement_board.dart';
 import 'package:se2_tigersafe/screens/mobile/account_create.dart';
 import 'package:se2_tigersafe/screens/mobile/incident_reporting.dart';
 import 'package:se2_tigersafe/screens/mobile/account_verification.dart';
 import 'package:se2_tigersafe/screens/mobile/profile_setup.dart';
+
 // Web screens
 import 'package:se2_tigersafe/screens/web/login_screen.dart';
 import 'package:se2_tigersafe/screens/web/dashboard.dart';
-import 'package:se2_tigersafe/screens/web/incident_report.dart';
-import 'package:se2_tigersafe/screens/web/hazard_reporting.dart';
 import 'package:se2_tigersafe/screens/web/emergency_personnel.dart';
 import 'package:se2_tigersafe/screens/web/report_logging.dart';
 import 'package:se2_tigersafe/screens/web/announcement_board.dart';
@@ -36,12 +33,18 @@ import 'package:se2_tigersafe/screens/web/priority_verification.dart';
 import 'package:se2_tigersafe/screens/web/priority_verification_details.dart';
 import 'package:se2_tigersafe/screens/web/priority_verification_action.dart';
 
-void main() async {
+Future<bool> isUserAuthorized(String uid, List<String> allowedRoles) async {
+  final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+  if (!doc.exists) return false;
+  final roles = List<String>.from(doc['roles'] ?? []);
+  return roles.any((role) => allowedRoles.contains(role));
+}
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
   runApp(MyApp());
 }
 
@@ -57,66 +60,133 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       initialRoute: '/',
-      routes: kIsWeb
-          ? {
-              // Web Routing
-        '/': (context) => WebLoginScreen(),
-        '/dashboard': (context) => WebDashboardScreen(),
-        '/incident_report': (context) => IncidentDashboardScreen(),
-        // '/hazard_reporting': (context) => HazardReportingScreen(),
-        '/response_teams': (context) => ResponseTeamsScreen(),
-        '/report_logging': (context) => ReportLoggingScreen(),
-        '/announcement_board': (context) => AnnouncementBoardScreen(),
-        '/create_announcement': (context) => CreateAnnouncementScreen(),
-        '/account_management': (context) => AccountManagementScreen(),
-        '/manage_accounts': (context) => ManageAccountsScreen(),
-        '/stakeholder_verification': (context) => StakeholderVerificationScreen(),
-        '/priority_verification': (context) => PriorityVerificationScreen(),
-        '/incident_dashboard': (context) => IncidentDashboardScreen(),
-            }
-          : {
-              // Mobile Routing
-            '/': (context) => MobileLoginScreen(),
-            '/login_screen': (context) => MobileLoginScreen(),
-            '/account_create': (context) => AccountCreateScreen(),
-            '/account_verification': (context) => AccountVerification(),
-            '/dashboard': (context) => DashboardScreen(),
-            '/ert_dashboard': (context) => ERTDashboardScreen(),
-            '/reports': (context) => ReportsListScreen(),
-            '/profile_setup': (context) => ProfileSetupScreen(),
-            '/hazard_reporting': (context) => IncidentReportingScreen(),
-              // '/response_teams': (context) => EmergencyPersonnelScreen(),
-              // '/report_logging': (context) => ReportLoggingScreen(),
-              // '/announcement_board': (context) => AnnouncementBoardScreen(),
-            },
+      onGenerateRoute: (settings) {
+        final user = FirebaseAuth.instance.currentUser;
 
-            onGenerateRoute: (settings) {
-              if (settings.name == '/stakeholder_verification_details') {
-                final args = settings.arguments as VerificationRequestModel;
-                return MaterialPageRoute(
-                  builder: (_) => StakeholderVerificationDetailsScreen(request: args),
-                );
-              }
-              if (settings.name == '/stakeholder_verification_action') {
-                final args = settings.arguments as VerificationRequestModel;
-                return MaterialPageRoute(
-                  builder: (_) => ApplicationDeniedScreen(request: args),
-                );
-              }
-              if (settings.name == '/priority_verification_details') {
-                final args = settings.arguments as VerificationRequestModel;
-                return MaterialPageRoute(
-                  builder: (_) => PriorityVerificationDetailsScreen(request: args),
-                );
-              }
+        Future<Widget> resolveProtectedRoute(Widget screen, List<String> roles) async {
+          if (user == null) return kIsWeb ? WebLoginScreen() : MobileLoginScreen();
+          final authorized = await isUserAuthorized(user.uid, roles);
+          return authorized ? screen : (kIsWeb ? WebLoginScreen() : MobileLoginScreen());
+        }
 
-              if (settings.name == '/priority_verification_action') {
-                final args = settings.arguments as VerificationRequestModel;
-                return MaterialPageRoute(
-                  builder: (_) => PriorityApplicationDeniedScreen(request: args),
-                );
-              }
-              return null;
+        switch (settings.name) {
+          case '/':
+          case '/login_screen':
+            return MaterialPageRoute(
+              builder: (_) => kIsWeb ? WebLoginScreen() : MobileLoginScreen(),
+            );
+
+          // Mobile routes
+          case '/account_create':
+            return MaterialPageRoute(builder: (_) => AccountCreateScreen());
+          case '/account_verification':
+            return MaterialPageRoute(builder: (_) => AccountVerification());
+          case '/dashboard':
+            return MaterialPageRoute(
+              builder: (_) => kIsWeb ? WebDashboardScreen() : DashboardScreen(),
+            );
+          case '/ert_dashboard':
+            return MaterialPageRoute(builder: (_) => ERTDashboardScreen());
+          case '/reports':
+            return MaterialPageRoute(builder: (_) => ReportsListScreen());
+          case '/profile_setup':
+            return MaterialPageRoute(builder: (_) => ProfileSetupScreen());
+          case '/hazard_reporting':
+            return MaterialPageRoute(builder: (_) => IncidentReportingScreen());
+
+          // Web routes with RBAC
+          case '/response_teams':
+            return MaterialPageRoute(builder: (_) => FutureBuilder(
+              future: resolveProtectedRoute(ResponseTeamsScreen(), ['command_center_admin', 'command_center_operator']),
+              builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
+                  ? snapshot.data!
+                  : Scaffold(body: Center(child: CircularProgressIndicator())),
+            ));
+          case '/report_logging':
+            return MaterialPageRoute(builder: (_) => FutureBuilder(
+              future: resolveProtectedRoute(ReportLoggingScreen(), ['command_center_admin', 'command_center_operator']),
+              builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
+                  ? snapshot.data!
+                  : Scaffold(body: Center(child: CircularProgressIndicator())),
+            ));
+          case '/announcement_board':
+            return MaterialPageRoute(builder: (_) => FutureBuilder(
+              future: resolveProtectedRoute(AnnouncementBoardScreen(), ['command_center_admin', 'command_center_operator']),
+              builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
+                  ? snapshot.data!
+                  : Scaffold(body: Center(child: CircularProgressIndicator())),
+            ));
+          case '/create_announcement':
+            return MaterialPageRoute(builder: (_) => FutureBuilder(
+              future: resolveProtectedRoute(CreateAnnouncementScreen(), ['command_center_admin', 'command_center_operator']),
+              builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
+                  ? snapshot.data!
+                  : Scaffold(body: Center(child: CircularProgressIndicator())),
+            ));
+          case '/account_management':
+            return MaterialPageRoute(builder: (_) => FutureBuilder(
+              future: resolveProtectedRoute(AccountManagementScreen(), ['command_center_admin']),
+              builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
+                  ? snapshot.data!
+                  : Scaffold(body: Center(child: CircularProgressIndicator())),
+            ));
+          case '/manage_accounts':
+            return MaterialPageRoute(builder: (_) => FutureBuilder(
+              future: resolveProtectedRoute(ManageAccountsScreen(), ['command_center_admin']),
+              builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
+                  ? snapshot.data!
+                  : Scaffold(body: Center(child: CircularProgressIndicator())),
+            ));
+          case '/stakeholder_verification':
+            return MaterialPageRoute(builder: (_) => FutureBuilder(
+              future: resolveProtectedRoute(StakeholderVerificationScreen(), ['command_center_admin', 'command_center_operator']),
+              builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
+                  ? snapshot.data!
+                  : Scaffold(body: Center(child: CircularProgressIndicator())),
+            ));
+          case '/priority_verification':
+            return MaterialPageRoute(builder: (_) => FutureBuilder(
+              future: resolveProtectedRoute(PriorityVerificationScreen(), ['command_center_admin', 'command_center_operator']),
+              builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
+                  ? snapshot.data!
+                  : Scaffold(body: Center(child: CircularProgressIndicator())),
+            ));
+          case '/incident_dashboard':
+            return MaterialPageRoute(builder: (_) => FutureBuilder(
+              future: resolveProtectedRoute(IncidentDashboardScreen(), ['command_center_admin', 'command_center_operator']),
+              builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
+                  ? snapshot.data!
+                  : Scaffold(body: Center(child: CircularProgressIndicator())),
+            ));
+        }
+
+        // Verification screens (shared)
+        if (settings.name == '/stakeholder_verification_details') {
+          final args = settings.arguments as VerificationRequestModel;
+          return MaterialPageRoute(
+            builder: (_) => StakeholderVerificationDetailsScreen(request: args),
+          );
+        }
+        if (settings.name == '/stakeholder_verification_action') {
+          final args = settings.arguments as VerificationRequestModel;
+          return MaterialPageRoute(
+            builder: (_) => ApplicationDeniedScreen(request: args),
+          );
+        }
+        if (settings.name == '/priority_verification_details') {
+          final args = settings.arguments as VerificationRequestModel;
+          return MaterialPageRoute(
+            builder: (_) => PriorityVerificationDetailsScreen(request: args),
+          );
+        }
+        if (settings.name == '/priority_verification_action') {
+          final args = settings.arguments as VerificationRequestModel;
+          return MaterialPageRoute(
+            builder: (_) => PriorityApplicationDeniedScreen(request: args),
+          );
+        }
+
+        return null;
       },
     );
   }
