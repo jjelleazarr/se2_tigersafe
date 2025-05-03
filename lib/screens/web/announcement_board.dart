@@ -1,318 +1,191 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-// import 'package:se2_tigersafe/widgets/rightdrawer_black';
-import 'package:se2_tigersafe/widgets/web/incident_report/video_player.dart';
-import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
+import '../../models/announcements_collection.dart';
 
 class AnnouncementBoardScreen extends StatefulWidget {
+  const AnnouncementBoardScreen({super.key});
+
   @override
-  _AnnouncementBoardScreenState createState() => _AnnouncementBoardScreenState();
+  State<AnnouncementBoardScreen> createState() => _AnnouncementBoardScreenState();
 }
 
 class _AnnouncementBoardScreenState extends State<AnnouncementBoardScreen> {
-  String? _creatorName;
-  String? _attachmentHttpUrl;
-  final priorityColors = {
-    "High": Colors.red,
-    "Medium": Colors.orange,
-    "Low": Colors.grey,
-  };
+  final DateFormat _fmt = DateFormat('MMM d, y  h:mm a');
 
-  final Map<String, String> roleLabels = {
-    "stakeholder": "Stakeholder",
-    "command_center_operator": "Command Center",
-    "command_center_admin": "Command Center",
-    "emergency_response_team": "Emergency Response Team",
-  };
+  QueryDocumentSnapshot<Map<String, dynamic>>? _selectedDoc;
+  String? _resolvedAuthor;
 
+  // ───────────────────────── helpers ────────────────────────── //
 
-  DocumentSnapshot? _selectedAnnouncement;
-
-  void _selectAnnouncement(DocumentSnapshot doc) async {
+  void _selectDocument(QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
     setState(() {
-      _selectedAnnouncement = doc;
-      _creatorName = null;
-      _attachmentHttpUrl = null;
+      _selectedDoc = doc;
+      _resolvedAuthor = null; 
     });
 
-    final data = doc.data() as Map<String, dynamic>;
-    final createdByUid = data['created_by'];
-    final attachmentUrl = data['attachments'];
-
-    // Fetch creator info
-    if (createdByUid != null) {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(createdByUid).get();
-      if (userDoc.exists) {
-        final userData = userDoc.data()!;
-        final fullName = [
-          userData['first_name'] ?? '',
-          userData['middle_name'] ?? '',
-          userData['surname'] ?? ''
-        ].where((part) => part.trim().isNotEmpty).join(' ');
-        setState(() => _creatorName = fullName);
-      }
+    // Attempt to use cached name first
+    final cached = doc.data()['creator_name'] as String?;
+    if (cached != null && cached.isNotEmpty) {
+      setState(() => _resolvedAuthor = cached);
+      return;
     }
 
-    // Get HTTP download URL if it's a gs:// link
-    if (attachmentUrl != null && attachmentUrl.startsWith('gs://')) {
-      try {
-        final ref = FirebaseStorage.instance.refFromURL(attachmentUrl);
-        final url = await ref.getDownloadURL();
-        setState(() {
-          _attachmentHttpUrl = url;
-          print('Image URL (download token): $_attachmentHttpUrl');
-        });
-      } catch (e) {
-        print("Error fetching download URL: $e");
+    // Fallback lookup from /users/{uid}
+    final uid = doc.data()['created_by'];
+    try {
+      final snap = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final u = snap.data();
+      if (u != null) {
+        final name = [
+          u['first_name'] ?? '',
+          u['middle_name'] ?? '',
+          u['surname'] ?? '',
+        ].where((p) => p.toString().trim().isNotEmpty).join(' ').trim();
+        if (mounted) setState(() => _resolvedAuthor = name);
       }
-    } else if (attachmentUrl != null) {
-      setState(() {
-        _attachmentHttpUrl = attachmentUrl;
-        print('Image URL (raw link): $_attachmentHttpUrl');
-      });
+    } catch (_) {
+      // silently ignore
     }
   }
 
-  void _clearSelection() {
-    setState(() {
-      _selectedAnnouncement = null;
-    });
+  void _clearSelection() => setState(() => _selectedDoc = null);
+
+  // ───────────────────────── actions ────────────────────────── //
+
+  Future<void> _toggleHidden() async {
+    if (_selectedDoc == null) return;
+    final current = _selectedDoc!.data()['is_hidden'] == true;
+    await FirebaseFirestore.instance
+        .collection('announcements')
+        .doc(_selectedDoc!.id)
+        .update({'is_hidden': !current});
   }
 
-  Widget _buildAnnouncementCard(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    final title = data['title'] ?? 'No Title';
-    final content = data['content'] ?? '';
-    final type = data['announcement_type'] ?? 'General';
-    final timestamp = (data['timestamp'] as Timestamp?)?.toDate();
-    final priority = data['priority'] ?? 'Low';
+  void _handleEdit() {
+    if (_selectedDoc == null) return;
+    final model = AnnouncementModel.fromJson(_selectedDoc!.data(), _selectedDoc!.id);
+    Navigator.pushNamed(context, '/announcement_form', arguments: model);
+  }
 
-    return InkWell(
-      onTap: () => _selectAnnouncement(doc),
-      child: Container(
-        margin: EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("[$type] $title", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 8),
-              if (timestamp != null)
-                Text(
-                  "Posted on ${DateFormat('yyyy-MM-dd – hh:mm a').format(timestamp)}",
-                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                ),
-              const SizedBox(height: 8),
-              Text(content.length > 100 ? content.substring(0, 100) + '...' : content),
-              const SizedBox(height: 8),
-              if (_selectedAnnouncement?.id != doc.id)
-                TextButton(
-                  onPressed: () => _selectAnnouncement(doc),
-                  child: Text("Read More", style: TextStyle(color: Colors.blue)),
-                ),
-            ],
-          ),
-        ),
+  Future<void> _handleDelete() async {
+    if (_selectedDoc == null) return;
+    await FirebaseFirestore.instance
+        .collection('announcements')
+        .doc(_selectedDoc!.id)
+        .delete();
+    _clearSelection();
+  }
+
+  // ───────────────────────── build card  ────────────────────── //
+
+  Widget _buildAnnouncementCard(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data();
+    final priority = data['priority'] as String? ?? 'Low';
+    Color priorityColor;
+    switch (priority.toLowerCase()) {
+      case 'high':
+        priorityColor = Colors.red.shade700;
+        break;
+      case 'medium':
+        priorityColor = Colors.orange.shade700;
+        break;
+      default:
+        priorityColor = Colors.green.shade700;
+    }
+
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      child: ListTile(
+        title: Text(data['title'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(_fmt.format((data['timestamp'] as Timestamp).toDate())),
+        trailing: Chip(label: Text(priority), backgroundColor: priorityColor.withOpacity(0.15), labelStyle: TextStyle(color: priorityColor)),
+        selected: _selectedDoc?.id == doc.id,
+        onTap: () => _selectDocument(doc),
       ),
     );
   }
 
+  // ───────────────────────── detail pane  ───────────────────── //
 
-  Widget _buildDetailPanel() {
-    if (_selectedAnnouncement == null) return SizedBox();
-    final data = _selectedAnnouncement!.data() as Map<String, dynamic>;
-    final timestamp = (data['timestamp'] as Timestamp?)?.toDate();
-    final title = data['title'] ?? 'No Title';
-    return Expanded(
-      flex: 3,
-      child: Container(
-        margin: EdgeInsets.only(left: 16),
-        padding: EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.black12),
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.white,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildDetailPane() {
+    if (_selectedDoc == null) {
+      return const Center(child: Text('Select an announcement to view'));
+    }
+    final data = _selectedDoc!.data();
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(data['title'] ?? '', style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 4),
+          Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: title.isNotEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.only(top: 4.0),
-                            child: Text(
-                              "[${data['announcement_type']}] $title",
-                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                            ),
-                          )
-                        : SizedBox(),
-                  ),
-                  IconButton(icon: Icon(Icons.close), onPressed: _clearSelection),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (timestamp != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
-                  child: Text(
-                    "Posted on ${DateFormat('yyyy-MM-dd – hh:mm a').format(timestamp)}",
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                  ),
-                ),
-              const SizedBox(height: 12),
-              Chip(
-                label: Text("Priority: ${data['priority']}"),
-                backgroundColor: priorityColors[data['priority']]?.withOpacity(0.15) ?? Colors.grey[200],
-                labelStyle: TextStyle(
-                  color: priorityColors[data['priority']] ?? Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (_attachmentHttpUrl != null)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: _attachmentHttpUrl!.endsWith('.mp4')
-                      ? VideoPlayerWidget(url: _attachmentHttpUrl!)
-                      : Image.network(
-                          _attachmentHttpUrl!,
-                          fit: BoxFit.cover,
-                          height: 150,
-                          width: double.infinity,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            height: 150,
-                            width: double.infinity,
-                            color: Colors.grey[300],
-                            alignment: Alignment.center,
-                            child: Icon(Icons.broken_image, color: Colors.grey[700], size: 48),
-                          ),
-                        ),
-                ),
-              const SizedBox(height: 12),
-              Text(data['content'], style: TextStyle(fontSize: 16)),
-              const SizedBox(height: 16),
-              if (data['visibility_scope'] != null)
-                Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Visible To:", style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 6),
-                      ...List<String>.from(data['visibility_scope']).map((role) {
-                        final label = roleLabels[role] ?? role;
-                        return Text("- $label");
-                      }),
-                    ],
-                  ),
-                ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  IconButton(icon: Icon(Icons.visibility), onPressed: () {}),
-                  IconButton(icon: Icon(Icons.edit), onPressed: () {}),
-                  IconButton(icon: Icon(Icons.delete, color: Colors.red), onPressed: () async {
-                    await FirebaseFirestore.instance.collection('announcements').doc(_selectedAnnouncement!.id).delete();
-                    _clearSelection();
-                  }),
-                ],
-              )
+              Text(_resolvedAuthor ?? '…', style: Theme.of(context).textTheme.labelMedium),
+              const SizedBox(width: 12),
+              Text(_fmt.format((data['timestamp'] as Timestamp).toDate()), style: Theme.of(context).textTheme.labelMedium),
             ],
           ),
-        ),
+          const Divider(height: 24),
+          Text(data['content'] ?? ''),
+          const Spacer(),
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(data['is_hidden'] == true ? Icons.visibility_off : Icons.visibility),
+                onPressed: _toggleHidden,
+                tooltip: data['is_hidden'] == true ? 'Unhide' : 'Hide',
+              ),
+              IconButton(icon: const Icon(Icons.edit), onPressed: _handleEdit),
+              IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: _handleDelete),
+            ],
+          )
+        ],
       ),
     );
   }
 
-
+  // ───────────────────────── main build  ───────────────────── //
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const DashboardAppBar(),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 1200),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: _selectedAnnouncement == null ? 1 : 2,
-                  child: Column(
-                    children: [
-                      const Center(
-                        child: Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Announcement ',
-                                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
-                              ),
-                              TextSpan(
-                                text: 'Board',
-                                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFFEC00F)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Expanded(
-                        child: StreamBuilder<QuerySnapshot>(
-                          stream: FirebaseFirestore.instance
-                              .collection('announcements')
-                              .orderBy('timestamp', descending: true)
-                              .snapshots(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return Center(child: CircularProgressIndicator());
-                            }
-
-                            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                              return Center(child: Text("No announcements available."));
-                            }
-
-                            final docs = snapshot.data!.docs;
-
-                            return ListView.builder(
-                              itemCount: docs.length,
-                              itemBuilder: (context, index) => _buildAnnouncementCard(docs[index]),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (_selectedAnnouncement != null) _buildDetailPanel(),
-              ],
+      appBar: AppBar(title: const Text('Announcement Board')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.pushNamed(context, '/announcement_form'),
+        icon: const Icon(Icons.add),
+        label: const Text('New Announcement'),
+      ),
+      body: Row(
+        children: [
+          // —— Left: list —— //
+          Expanded(
+            flex: 2,
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection('announcements')
+                  .where('is_hidden', isEqualTo: false)
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final docs = snapshot.data?.docs ?? [];
+                if (docs.isEmpty) {
+                  return const Center(child: Text('No announcements'));
+                }
+                return ListView.builder(
+                  itemCount: docs.length,
+                  itemBuilder: (ctx, i) => _buildAnnouncementCard(docs[i]),
+                );
+              },
             ),
           ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.pushNamed(context, '/create_announcement');
-        },
-        icon: Icon(Icons.add, color: Colors.white),
-        label: Text("New Announcement", style: TextStyle(color: Colors.white)),
-        backgroundColor: Color(0xFFFEC00F),
+          // —— Right: details —— //
+          Expanded(flex: 3, child: _buildDetailPane()),
+        ],
       ),
     );
   }
