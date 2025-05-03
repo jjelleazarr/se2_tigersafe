@@ -1,5 +1,3 @@
-// In manage_accounts.dart
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -22,71 +20,144 @@ class _ManageAccountsScreenState extends State<ManageAccountsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final showStatus = screenWidth >= 1000;
+    final showRole = screenWidth >= 850;
+    final showEmail = screenWidth >= 700;
+
     return Scaffold(
-      appBar: AppBar(title: Text('Manage Accounts')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          showDialog(
-            context: context,
-            builder: (_) => AddAccountDialog(
-              onSubmitted: () => setState(() {}),
-            ),
-          );
-        },
-        icon: Icon(Icons.add),
-        label: Text("Add Account"),
-      ),
+      appBar: AppBar(title: const Text('Manage Accounts')),
       body: FutureBuilder<QuerySnapshot>(
         future: FirebaseFirestore.instance.collection('users').get(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator());
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text("No accounts found."));
+          if (snapshot.connectionState == ConnectionState.waiting)
+            return const Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+            return const Center(child: Text("No accounts found."));
 
-          return ListView(
-            padding: EdgeInsets.all(16),
-            children: snapshot.data!.docs.map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              final fullName = "${data['first_name']} ${data['surname']}";
-              final String singleRole = (data['roles'] as List).isNotEmpty ? data['roles'][0] : 'unknown';
-              final role = roleLabels[singleRole] ?? "Unknown";
-              final status = data['account_status'] ?? "Unknown";
+          final users = snapshot.data!.docs;
 
-              return ListTile(
-                tileColor: status == "Banned" ? Colors.red.shade100 : null,
-                leading: Icon(Icons.person),
-                title: Text(fullName, style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text("Role: $role, Account Status: $status"),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () => _editAccount(context, doc.id, data),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.block, color: Colors.orange),
-                      onPressed: () async {
-                        await FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(doc.id)
-                            .update({'account_status': 'Banned'});
-                        setState(() {});
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () async {
-                        await FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(doc.id)
-                            .delete();
-                        setState(() {});
-                      },
-                    ),
-                  ],
+          return Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black),
+                    color: Colors.white,
+                  ),
+                  child: Column(
+                    children: [
+                      // Table Header
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        color: Colors.black,
+                        child: Row(
+                          children: [
+                            Expanded(flex: 2, child: Text('Name', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                            if (showEmail) Expanded(flex: 3, child: Text('Email', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                            if (showRole) Expanded(flex: 2, child: Text('Role', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                            if (showStatus) Expanded(flex: 2, child: Text('Status', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                            Expanded(flex: 2, child: Text('Actions', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                          ],
+                        ),
+                      ),
+
+                      // Table Body (Scrollable)
+                      Container(
+                        constraints: const BoxConstraints(maxHeight: 500),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: users.map((doc) {
+                              final data = doc.data() as Map<String, dynamic>;
+                              final fullName = "${data['first_name']} ${data['surname']}";
+                              final String singleRole = (data['roles'] as List).isNotEmpty ? data['roles'][0] : 'unknown';
+                              final role = roleLabels[singleRole] ?? "Unknown";
+                              final status = data['account_status'] ?? "Unknown";
+                              final email = data['email'] ?? 'no-email';
+
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                decoration: const BoxDecoration(
+                                  border: Border(bottom: BorderSide(color: Colors.black12)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(flex: 2, child: Text(fullName)),
+                                    if (showEmail) Expanded(flex: 3, child: Text(email)),
+                                    if (showRole) Expanded(flex: 2, child: Text(role)),
+                                    if (showStatus) Expanded(flex: 2, child: Text(status)),
+                                    Expanded(
+                                      flex: 2,
+                                      child: Row(
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, color: Colors.blue),
+                                            onPressed: () => _editAccount(context, doc.id, data),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.block, color: Colors.orange),
+                                            onPressed: () async {
+                                              await FirebaseFirestore.instance
+                                                  .collection('users')
+                                                  .doc(doc.id)
+                                                  .update({'account_status': 'Banned'});
+                                              setState(() {});
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete, color: Colors.red),
+                                            onPressed: () async {
+                                              await FirebaseFirestore.instance
+                                                  .collection('users')
+                                                  .doc(doc.id)
+                                                  .delete();
+                                              setState(() {});
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              );
-            }).toList(),
+
+                const SizedBox(height: 20),
+
+                // Styled Add Account Button
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => AddAccountDialog(onSubmitted: () => setState(() {})),
+                      );
+                    },
+                    icon: const Icon(Icons.add, color: Colors.blue),
+                    label: RichText(
+                      text: const TextSpan(
+                        children: [
+                          TextSpan(text: 'Add ', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold)),
+                          TextSpan(text: 'Account', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           );
         },
       ),
@@ -105,18 +176,18 @@ class _ManageAccountsScreenState extends State<ManageAccountsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Edit Account"),
+        title: const Text("Edit Account"),
         content: SingleChildScrollView(
           child: Column(
             children: [
-              TextField(controller: firstNameController, decoration: InputDecoration(labelText: "First Name")),
-              TextField(controller: middleNameController, decoration: InputDecoration(labelText: "Middle Name")),
-              TextField(controller: surnameController, decoration: InputDecoration(labelText: "Surname")),
-              TextField(controller: phoneController, decoration: InputDecoration(labelText: "Phone Number")),
-              TextField(controller: addressController, decoration: InputDecoration(labelText: "Address")),
+              TextField(controller: firstNameController, decoration: const InputDecoration(labelText: "First Name")),
+              TextField(controller: middleNameController, decoration: const InputDecoration(labelText: "Middle Name")),
+              TextField(controller: surnameController, decoration: const InputDecoration(labelText: "Surname")),
+              TextField(controller: phoneController, decoration: const InputDecoration(labelText: "Phone Number")),
+              TextField(controller: addressController, decoration: const InputDecoration(labelText: "Address")),
               DropdownButtonFormField<String>(
                 value: role,
-                decoration: InputDecoration(labelText: "Role"),
+                decoration: const InputDecoration(labelText: "Role"),
                 items: roleLabels.entries
                     .map((entry) => DropdownMenuItem(value: entry.key, child: Text(entry.value)))
                     .toList(),
@@ -124,7 +195,7 @@ class _ManageAccountsScreenState extends State<ManageAccountsScreen> {
               ),
               DropdownButtonFormField<String>(
                 value: status,
-                decoration: InputDecoration(labelText: "Account Status"),
+                decoration: const InputDecoration(labelText: "Account Status"),
                 items: statusOptions.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
                 onChanged: (value) => status = value!,
               ),
@@ -132,7 +203,7 @@ class _ManageAccountsScreenState extends State<ManageAccountsScreen> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () async {
               await FirebaseFirestore.instance.collection('users').doc(docId).update({
@@ -147,14 +218,10 @@ class _ManageAccountsScreenState extends State<ManageAccountsScreen> {
               Navigator.pop(context);
               setState(() {});
             },
-            child: Text("Save Changes"),
+            child: const Text("Save Changes"),
           ),
         ],
       ),
     );
   }
-}
-
-extension StringCasingExtension on String {
-  String capitalize() => isNotEmpty ? "${this[0].toUpperCase()}${substring(1)}" : "";
 }

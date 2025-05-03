@@ -36,46 +36,88 @@ class _PriorityVerificationScreenState extends State<PriorityVerificationScreen>
     ).then((_) => _loadRequests());
   }
 
-  Widget _buildRequestCard(VerificationRequestModel request) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: ListTile(
-        title: Text('${request.firstName} ${request.middleName ?? ''} ${request.surname}',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text('Role: ${request.roles.join(', ')}'),
-        trailing: const Icon(Icons.arrow_forward_ios),
-        onTap: () => _openDetails(request),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Priority Verification')),
-      body: FutureBuilder<List<VerificationRequestModel>>(
-        future: _requestsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return const Center(child: Text('Error loading priority verification requests'));
-          }
+    return FutureBuilder<List<VerificationRequestModel>>(
+      future: _requestsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return const Center(child: Text('Error loading priority verification requests'));
+        }
 
-          final requests = snapshot.data!
-              .where((r) => r.roles.contains('emergency_response_team') && r.accountStatus == 'Pending')
-              .toList();
+        final requests = snapshot.data!
+            .where((r) => r.roles.contains('emergency_response_team') && r.accountStatus == 'Pending')
+            .toList();
 
-          if (requests.isEmpty) {
-            return const Center(child: Text('No pending priority verification requests.'));
-          }
+        if (requests.isEmpty) {
+          return const Center(child: Text('No pending priority verification requests.'));
+        }
 
-          return ListView(
-            children: requests.map(_buildRequestCard).toList(),
-          );
-        },
-      ),
+        return Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black),
+              color: Colors.white,
+            ),
+            child: Column(
+              children: [
+                // Table Header
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  color: Colors.black,
+                  child: Row(
+                    children: const [
+                      Expanded(
+                        flex: 3,
+                        child: Text('Name', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold)),
+                      ),
+                      Expanded(
+                        flex: 4,
+                        child: Text('Role', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Table Body
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: requests.map((request) {
+                        String fullName = [
+                          request.firstName,
+                          request.middleName ?? '',
+                          request.surname,
+                        ].where((name) => name.trim().isNotEmpty).join(' ');
+
+                        return InkWell(
+                          onTap: () => _openDetails(request),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: const BoxDecoration(
+                              border: Border(bottom: BorderSide(color: Colors.black12)),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(flex: 3, child: Text(fullName)),
+                                Expanded(flex: 4, child: Text(request.roles.join(', '))),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

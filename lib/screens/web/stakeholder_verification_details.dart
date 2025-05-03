@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/controllers/verification_requests_controller.dart';
 import 'package:se2_tigersafe/models/verification_requests_collection.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 
 class StakeholderVerificationDetailsScreen extends StatelessWidget {
   final VerificationRequestModel request;
@@ -15,14 +15,12 @@ class StakeholderVerificationDetailsScreen extends StatelessWidget {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
-    // 1. Update verification status to Active
     await _controller.updateRequestStatus(
       requestId: request.requestId,
       newStatus: 'Active',
       adminId: currentUser.uid,
     );
 
-    // 2. Create users document in Firestore
     try {
       await FirebaseFirestore.instance
           .collection('users')
@@ -35,7 +33,7 @@ class StakeholderVerificationDetailsScreen extends StatelessWidget {
         'email': request.email,
         'phone_number': request.phoneNumber,
         'address': request.address,
-        'profile_picture': request.profileImageUrl ?? '',
+        'profile_picture': '', // No image for stakeholder
         'roles': request.roles,
         'account_status': 'Active',
         'created_at': request.submittedAt,
@@ -45,11 +43,10 @@ class StakeholderVerificationDetailsScreen extends StatelessWidget {
     } catch (e) {
       print('Error creating user document: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error creating user document.')),
+        const SnackBar(content: Text('Error creating user document.')),
       );
     }
   }
-
 
   void _rejectRequest(BuildContext context) async {
     final reasons = [
@@ -99,12 +96,8 @@ class StakeholderVerificationDetailsScreen extends StatelessWidget {
                   newStatus: 'Rejected',
                   adminId: currentUser.uid,
                 );
-                Navigator.pop(ctx); // Close dialog
-                try {
-                  Navigator.pushReplacementNamed(context, '/stakeholder_verification');
-                } catch (e) {
-                  print('Navigation error: $e');
-                }
+                Navigator.pop(ctx);
+                Navigator.pushReplacementNamed(context, '/stakeholder_verification');
               },
               child: const Text('Confirm'),
             ),
@@ -114,55 +107,155 @@ class StakeholderVerificationDetailsScreen extends StatelessWidget {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
-    final isUST = request.email.endsWith('@ust.edu.ph');
     return Scaffold(
-      appBar: AppBar(title: const Text('Request Details')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      appBar: const DashboardAppBar(),
+      backgroundColor: const Color(0xFFF5F7FA),
+      body: Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Name: ${request.firstName} ${request.middleName} ${request.surname}', style: const TextStyle(fontSize: 18)),
-            Text('Email: ${request.email}'),
-            Text('Phone: ${request.phoneNumber}'),
-            Text('ID Number: ${request.idNumber}'),
-            Text('Address: ${request.address}'),
-            if (request.profileImageUrl != null && request.profileImageUrl!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Image.network(request.profileImageUrl!, height: 100),
-              ),
-            if (!isUST && request.proofOfIdentity.isNotEmpty)
-              InkWell(
-                onTap: () => launchUrl(Uri.parse(request.proofOfIdentity)),
-                child: Text('Proof of Identity: Tap to View', style: const TextStyle(color: Colors.blue)),
-              ),
             const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => _approveRequest(context),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                    child: const Text('Approve'),
-                  ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Stakeholder ',
+                      style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 28),
+                    ),
+                    TextSpan(
+                      text: 'Verification',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => _rejectRequest(context),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                    child: const Text('Reject'),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: 900,
+              constraints: const BoxConstraints(maxHeight: 500),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: Colors.black),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(child: _buildInfoLabel("ID Number", request.idNumber)),
+                                Expanded(child: _buildInfoLabel("Phone Number", request.phoneNumber)),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(child: _buildInfoLabel("Surname", request.surname)),
+                                Expanded(child: _buildInfoLabel("Address", request.address)),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(child: _buildInfoLabel("First Name", request.firstName)),
+                                Expanded(child: _buildRoleChip("Role", "Stakeholder")),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(child: _buildInfoLabel("Middle Name", request.middleName ?? "N/A")),
+                                Expanded(child: _buildInfoLabel("Email", request.email)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => _approveRequest(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text('Approve', style: TextStyle(color: Colors.white, fontSize: 18)),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => _rejectRequest(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text('Reject', style: TextStyle(color: Colors.white, fontSize: 18)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoLabel(String label, String value) {
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: "$label\n",
+            style: const TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          TextSpan(
+            text: value,
+            style: const TextStyle(color: Colors.black, fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoleChip(String label, String role) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            role,
+            style: const TextStyle(color: Color(0xFFFEC00F), fontSize: 14),
+          ),
+        ),
+      ],
     );
   }
 }
