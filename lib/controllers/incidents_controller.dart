@@ -1,85 +1,46 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/incidents_collection.dart';
 
-class IncidentController {
-  final CollectionReference incidentsRef =
+class IncidentsController {
+  final CollectionReference<Map<String, dynamic>> _ref =
       FirebaseFirestore.instance.collection('incidents');
 
-  /// Fetch All Incidents
-  Future<List<IncidentModel>> getAllIncidents() async {
-    try {
-      QuerySnapshot snapshot = await incidentsRef.get();
-      return snapshot.docs.map((doc) {
-        return IncidentModel.fromJson(doc.data() as Map<String, dynamic>, doc.id);
-      }).toList();
-    } catch (e) {
-      print('Error fetching incidents: $e');
-      return [];
-    }
+  /// Basic create (if you allow web operators to open a new incident)
+  Future<String> createIncident(IncidentModel model) async {
+    final doc = await _ref.add(model.toJson());
+    return doc.id;
   }
 
-  /// Get a Specific Incident by ID
-  Future<IncidentModel?> getIncidentById(String incidentId) async {
-    try {
-      DocumentSnapshot doc = await incidentsRef.doc(incidentId).get();
-      if (doc.exists) {
-        return IncidentModel.fromJson(doc.data() as Map<String, dynamic>, doc.id);
-      }
-    } catch (e) {
-      print('Error fetching incident: $e');
-    }
-    return null;
-  }
+  /// Generic update – reuse for status changes, etc.
+  Future<void> updateIncident(String id, Map<String, dynamic> update) =>
+      _ref.doc(id).update(update);
 
-  /// Report a New Incident
-  Future<void> reportIncident(
-      String reporterId, String type, String location) async {
-    try {
-      await incidentsRef.add({
-        'reporter_id': reporterId,
-        'type': type,
-        'location': location,
-        'status': "Pending", // Default status
-        'reported_at': Timestamp.now(),
-        'assigned_teams': [], // Initially empty
+  /// Assign a team and reset dispatched list.
+  Future<void> assignTeam(String incidentId, String team) => _ref.doc(incidentId)
+      .update({'assigned_team': team, 'dispatched_members': <String>[]});
+
+  /// Add a responder UID; first responder flips status to "Personnel Dispatched".
+  Future<void> addDispatchedMember(String incidentId, String uid) =>
+      FirebaseFirestore.instance.runTransaction((tx) async {
+        final ref = _ref.doc(incidentId);
+        final snap = await tx.get(ref);
+        final members = List<String>.from(snap['dispatched_members'] ?? []);
+        if (!members.contains(uid)) {
+          members.add(uid);
+          tx.update(ref, {
+            'dispatched_members': members,
+            'status': 'Personnel Dispatched',
+          });
+        }
       });
-      print("Incident reported successfully!");
-    } catch (e) {
-      print('Error reporting incident: $e');
-    }
-  }
 
-  /// Update Incident Status
-  Future<void> updateIncidentStatus(String incidentId, String newStatus) async {
-    try {
-      await incidentsRef.doc(incidentId).update({
-        'status': newStatus,
-      });
-      print("Incident status updated to $newStatus");
-    } catch (e) {
-      print('Error updating incident status: $e');
-    }
-  }
-
-  /// Assign Emergency Teams to Incident
-  Future<void> assignTeams(String incidentId, List<String> teamIds) async {
-    try {
-      await incidentsRef.doc(incidentId).update({
-        'assigned_teams': teamIds,
-      });
-      print("Emergency teams assigned to incident.");
-    } catch (e) {
-      print('Error assigning teams: $e');
-    }
-  }
-
-  /// Delete an Incident
-  Future<void> deleteIncident(String incidentId) async {
-    try {
-      await incidentsRef.doc(incidentId).delete();
-      print("Incident deleted successfully!");
-    } catch (e) {
-      print('Error deleting incident: $e');
-    }
-  }
+  /// Stream incidents filtered by team specialisation.
+  Stream<List<IncidentModel>> incidentsForTeam(String team) => _ref
+      .where('assigned_team', isEqualTo: team)
+      .where('status', whereIn: ['Pending', 'Personnel Dispatched'])
+      .snapshots()
+      .map((snap) => snap.docs
+          .map((d) => IncidentModel.fromJson(d.data(), d.id))
+          .toList());
 }
+

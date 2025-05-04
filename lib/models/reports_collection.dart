@@ -1,50 +1,56 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ReportModel {
-  final String reportId; // Auto-generated document ID
+  final String reportId;
+  final String incidentId;            
   final String userId;
-  final String type;
+  final String typeId;                
   final String description;
   final String location;
-  final String status; 
-  final Timestamp reportedAt; 
-  final List<String> mediaUrls; // URLs of images/videos (if any)
+  final String status;
+  final String? resolvedBy;           
+  final Timestamp reportedAt;
+  final List<String> mediaUrls;
+  final String? exportUrl;            
 
   ReportModel({
     required this.reportId,
+    required this.incidentId,
     required this.userId,
-    required this.type,
+    required this.typeId,
     required this.description,
     required this.location,
     required this.status,
     required this.reportedAt,
-    required this.mediaUrls,
+    this.resolvedBy,
+    this.mediaUrls = const [],
+    this.exportUrl,
   });
 
-  /// Convert Firestore document to Dart Object
-  factory ReportModel.fromJson(Map<String, dynamic> json, String documentId) {
-    return ReportModel(
-      reportId: documentId,
-      userId: json['user_id'],
-      type: json['type'],
-      description: json['description'],
-      location: json['location'],
-      status: json['status'],
-      reportedAt: json['reported_at'],
-      mediaUrls: List<String>.from(json['media_urls'] ?? []),
-    );
-  }
+  factory ReportModel.fromJson(Map<String, dynamic> j, String id) => ReportModel(
+        reportId: id,
+        incidentId: j['incident_id'] as String,
+        userId: j['user_id'] as String,
+        typeId: j['type'] as String,
+        description: j['description'] as String,
+        location: j['location'] as String,
+        status: j['status'] as String,
+        reportedAt: j['reported_at'] as Timestamp,
+        resolvedBy: j['resolved_by'] as String?,
+        mediaUrls: List<String>.from(j['media_urls'] ?? []),
+        exportUrl: j['export_url'] as String?,
+      );
 
-  /// Convert Dart Object to Firestore document
-  Map<String, dynamic> toJson() {
-    return {
-      'user_id': userId,
-      'type': type,
-      'description': description,
-      'location': location,
-      'status': status,
-      'reported_at': reportedAt,
-      'media_urls': mediaUrls,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'incident_id': incidentId,
+        'user_id': userId,
+        'type': typeId,
+        'description': description,
+        'location': location,
+        'status': status,
+        'reported_at': reportedAt,
+        'resolved_by': resolvedBy,
+        'media_urls': mediaUrls,
+        'export_url': exportUrl,
+      };
 }
