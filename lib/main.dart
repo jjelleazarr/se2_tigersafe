@@ -21,7 +21,7 @@ import 'package:se2_tigersafe/screens/mobile/profile_setup.dart';
 import 'package:se2_tigersafe/screens/web/login_screen.dart';
 import 'package:se2_tigersafe/screens/web/dashboard.dart';
 import 'package:se2_tigersafe/screens/web/emergency_personnel.dart';
-import 'package:se2_tigersafe/screens/web/report_logging.dart';
+import 'package:se2_tigersafe/screens/web/report_logging_dashboard.dart';
 import 'package:se2_tigersafe/screens/web/announcement_board.dart';
 import 'package:se2_tigersafe/screens/web/announcement_form.dart';
 import 'package:se2_tigersafe/screens/web/account_management.dart';
@@ -32,6 +32,7 @@ import 'package:se2_tigersafe/screens/web/stakeholder_verification_action.dart';
 import 'package:se2_tigersafe/screens/web/priority_verification.dart';
 import 'package:se2_tigersafe/screens/web/priority_verification_details.dart';
 import 'package:se2_tigersafe/screens/web/priority_verification_action.dart';
+import 'package:se2_tigersafe/screens/web/report_logging.dart';
 
 Future<bool> isUserAuthorized(String uid, List<String> allowedRoles) async {
   final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
@@ -103,12 +104,17 @@ class MyApp extends StatelessWidget {
                   : Scaffold(body: Center(child: CircularProgressIndicator())),
             ));
           case '/report_logging':
-            return MaterialPageRoute(builder: (_) => FutureBuilder(
-              future: resolveProtectedRoute(ReportLoggingScreen(), ['command_center_admin', 'command_center_operator']),
-              builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
-                  ? snapshot.data!
-                  : Scaffold(body: Center(child: CircularProgressIndicator())),
-            ));
+            return MaterialPageRoute(
+              builder: (_) => FutureBuilder(
+                future: resolveProtectedRoute(
+                  ReportLoggingDashboardScreen(),
+                  ['command_center_admin', 'command_center_operator'],
+                ),
+                builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
+                    ? snapshot.data!
+                    : Scaffold(body: Center(child: CircularProgressIndicator())),
+              ),
+            );
           case '/announcement_board':
             return MaterialPageRoute(builder: (_) => FutureBuilder(
               future: resolveProtectedRoute(AnnouncementBoardScreen(), ['command_center_admin', 'command_center_operator']),
@@ -158,6 +164,18 @@ class MyApp extends StatelessWidget {
                   ? snapshot.data!
                   : Scaffold(body: Center(child: CircularProgressIndicator())),
             ));
+          case '/incident_create':
+            return MaterialPageRoute(
+              builder: (_) => FutureBuilder(
+                future: resolveProtectedRoute(
+                  ReportLoggingScreen(),
+                  ['command_center_admin', 'command_center_operator'],
+                ),
+                builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
+                    ? snapshot.data!
+                    : Scaffold(body: Center(child: CircularProgressIndicator())),
+              ),
+            );
         }
 
         // Verification screens (shared)
