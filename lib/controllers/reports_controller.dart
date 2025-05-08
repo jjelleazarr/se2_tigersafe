@@ -39,4 +39,18 @@ class ReportsController {
     await ref.putData(bytes);
     return ref.getDownloadURL();
   }
+
+  /// Generate a PDF for a report and return its download URL.
+  Future<String> generatePdf(String reportId) async {
+    // Get the report data
+    final doc = await _ref.doc(reportId).get();
+    if (!doc.exists) {
+      throw Exception('Report not found');
+    }
+    final report = ReportModel.fromJson(doc.data()!, doc.id);
+
+    // TODO: Implement actual PDF generation
+    // For now, return a placeholder URL
+    return 'https://example.com/report_exports/$reportId.pdf';
+  }
 }
