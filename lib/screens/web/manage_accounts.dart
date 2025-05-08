@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:se2_tigersafe/widgets/web/manage_accounts/add_account_dialog.dart';
 
 class ManageAccountsScreen extends StatefulWidget {
@@ -10,7 +9,6 @@ class ManageAccountsScreen extends StatefulWidget {
 
 class _ManageAccountsScreenState extends State<ManageAccountsScreen> {
   final List<String> statusOptions = ["Active", "Pending", "Rejected", "Banned"];
-
   final Map<String, String> roleLabels = {
     "stakeholder": "Stakeholder",
     "command_center_operator": "Command Center Operator",
@@ -21,145 +19,138 @@ class _ManageAccountsScreenState extends State<ManageAccountsScreen> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final showStatus = screenWidth >= 1000;
-    final showRole = screenWidth >= 850;
-    final showEmail = screenWidth >= 700;
+    final showStatus = screenWidth >= 950;
+    final showRole = screenWidth >= 800;
+    final showEmail = screenWidth >= 650;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Manage Accounts')),
-      body: FutureBuilder<QuerySnapshot>(
-        future: FirebaseFirestore.instance.collection('users').get(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting)
-            return const Center(child: CircularProgressIndicator());
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
-            return const Center(child: Text("No accounts found."));
+      backgroundColor: const Color(0xFFF5F7FA),
+      body: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black),
+                  color: Colors.white,
+                ),
+                child: FutureBuilder<QuerySnapshot>(
+                  future: FirebaseFirestore.instance.collection('users').get(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(child: Text("No accounts found."));
+                    }
 
-          final users = snapshot.data!.docs;
+                    final users = snapshot.data!.docs;
 
-          return Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black),
-                    color: Colors.white,
-                  ),
-                  child: Column(
-                    children: [
-                      // Table Header
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        color: Colors.black,
-                        child: Row(
-                          children: [
-                            Expanded(flex: 2, child: Text('Name', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
-                            if (showEmail) Expanded(flex: 3, child: Text('Email', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
-                            if (showRole) Expanded(flex: 2, child: Text('Role', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
-                            if (showStatus) Expanded(flex: 2, child: Text('Status', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
-                            Expanded(flex: 2, child: Text('Actions', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
-                          ],
-                        ),
-                      ),
-
-                      // Table Body (Scrollable)
-                      Container(
-                        constraints: const BoxConstraints(maxHeight: 500),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: users.map((doc) {
-                              final data = doc.data() as Map<String, dynamic>;
-                              final fullName = "${data['first_name']} ${data['surname']}";
-                              final String singleRole = (data['roles'] as List).isNotEmpty ? data['roles'][0] : 'unknown';
-                              final role = roleLabels[singleRole] ?? "Unknown";
-                              final status = data['account_status'] ?? "Unknown";
-                              final email = data['email'] ?? 'no-email';
-
-                              return Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                decoration: const BoxDecoration(
-                                  border: Border(bottom: BorderSide(color: Colors.black12)),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(flex: 2, child: Text(fullName)),
-                                    if (showEmail) Expanded(flex: 3, child: Text(email)),
-                                    if (showRole) Expanded(flex: 2, child: Text(role)),
-                                    if (showStatus) Expanded(flex: 2, child: Text(status)),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Row(
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.edit, color: Colors.blue),
-                                            onPressed: () => _editAccount(context, doc.id, data),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.block, color: Colors.orange),
-                                            onPressed: () async {
-                                              await FirebaseFirestore.instance
-                                                  .collection('users')
-                                                  .doc(doc.id)
-                                                  .update({'account_status': 'Banned'});
-                                              setState(() {});
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete, color: Colors.red),
-                                            onPressed: () async {
-                                              await FirebaseFirestore.instance
-                                                  .collection('users')
-                                                  .doc(doc.id)
-                                                  .delete();
-                                              setState(() {});
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
+                    return Column(
+                      children: [
+                        // Table Header
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          color: Colors.black,
+                          child: Row(
+                            children: [
+                              const Expanded(flex: 2, child: Text('Name', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                              if (showEmail) const Expanded(flex: 3, child: Text('Email', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                              if (showRole) const Expanded(flex: 2, child: Text('Role', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                              if (showStatus) const Expanded(flex: 2, child: Text('Status', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                              const Expanded(flex: 2, child: Text('Actions', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
+                        // Table Body
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: users.map((doc) {
+                                final data = doc.data() as Map<String, dynamic>;
+                                final fullName = "${data['first_name']} ${data['surname']}";
+                                final String singleRole = (data['roles'] as List).isNotEmpty ? data['roles'][0] : 'unknown';
+                                final role = roleLabels[singleRole] ?? "Unknown";
+                                final status = data['account_status'] ?? "Unknown";
+                                final email = data['email'] ?? 'no-email';
 
-                const SizedBox(height: 20),
-
-                // Styled Add Account Button
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => AddAccountDialog(onSubmitted: () => setState(() {})),
-                      );
-                    },
-                    icon: const Icon(Icons.add, color: Colors.blue),
-                    label: RichText(
-                      text: const TextSpan(
-                        children: [
-                          TextSpan(text: 'Add ', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold)),
-                          TextSpan(text: 'Account', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                    ),
-                  ),
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  decoration: const BoxDecoration(
+                                    border: Border(bottom: BorderSide(color: Colors.black12)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(flex: 2, child: Text(fullName)),
+                                      if (showEmail) Expanded(flex: 3, child: Text(email)),
+                                      if (showRole) Expanded(flex: 2, child: Text(role)),
+                                      if (showStatus) Expanded(flex: 2, child: Text(status)),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.start,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.edit, color: Colors.blue),
+                                              onPressed: () => _editAccount(context, doc.id, data),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.block, color: Colors.orange),
+                                              onPressed: () async {
+                                                await FirebaseFirestore.instance
+                                                    .collection('users')
+                                                    .doc(doc.id)
+                                                    .update({'account_status': 'Banned'});
+                                                setState(() {});
+                                              },
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.delete, color: Colors.red),
+                                              onPressed: () async {
+                                                await FirebaseFirestore.instance
+                                                    .collection('users')
+                                                    .doc(doc.id)
+                                                    .delete();
+                                                setState(() {});
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
-              ],
+              ),
             ),
-          );
-        },
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => AddAccountDialog(onSubmitted: () => setState(() {})),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+                icon: const Icon(Icons.add, color: Color(0xFFFEC00F)),
+                label: const Text('Add Account', style: TextStyle(color: Colors.white)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -188,9 +179,7 @@ class _ManageAccountsScreenState extends State<ManageAccountsScreen> {
               DropdownButtonFormField<String>(
                 value: role,
                 decoration: const InputDecoration(labelText: "Role"),
-                items: roleLabels.entries
-                    .map((entry) => DropdownMenuItem(value: entry.key, child: Text(entry.value)))
-                    .toList(),
+                items: roleLabels.entries.map((entry) => DropdownMenuItem(value: entry.key, child: Text(entry.value))).toList(),
                 onChanged: (value) => role = value!,
               ),
               DropdownButtonFormField<String>(
