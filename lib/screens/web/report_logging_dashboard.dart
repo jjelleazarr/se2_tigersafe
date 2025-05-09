@@ -64,7 +64,7 @@ class _ReportLoggingDashboardScreenState extends State<ReportLoggingDashboardScr
   Future<void> _fetchIncidents() async {
     final incidentsSnap = await FirebaseFirestore.instance
         .collection('incidents')
-        .orderBy('reported_at', descending: true)
+        .orderBy('reported_at', descending: !_isAscending)
         .get();
 
     List<IncidentModel> incidents = incidentsSnap.docs
@@ -91,7 +91,7 @@ class _ReportLoggingDashboardScreenState extends State<ReportLoggingDashboardScr
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text("Sorted ", style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 16)),
+          const Text("Sort ", style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 16)),
           const Text("by date: ", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(width: 8),
           DropdownButton<bool>(
@@ -109,10 +109,12 @@ class _ReportLoggingDashboardScreenState extends State<ReportLoggingDashboardScr
               ),
             ],
             onChanged: (value) {
-              setState(() {
-                _isAscending = value!;
+              if (value != null) {
+                setState(() {
+                  _isAscending = value;
+                });
                 _fetchIncidents();
-              });
+              }
             },
           ),
         ],
@@ -186,12 +188,25 @@ class _ReportLoggingDashboardScreenState extends State<ReportLoggingDashboardScr
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Incidents',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'All ',
+                        style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 24),
+                      ),
+                      TextSpan(
+                        text: 'Incidents',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               Container(
@@ -411,21 +426,21 @@ class _ReportLoggingDashboardScreenState extends State<ReportLoggingDashboardScr
                         children: [
                           // Header
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
                               color: Colors.black,
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(15),
                             ),
                             child: Text.rich(
                               TextSpan(
                                 children: [
                                   TextSpan(
                                     text: 'Incident ',
-                                    style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 28),
+                                    style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 24),
                                   ),
                                   TextSpan(
                                     text: 'Details',
-                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24),
                                   ),
                                 ],
                               ),

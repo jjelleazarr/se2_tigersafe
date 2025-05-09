@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/controllers/announcements_controller.dart';
 import 'package:se2_tigersafe/models/announcements_collection.dart';
+import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 
 class AnnouncementFormScreen extends StatefulWidget {
   const AnnouncementFormScreen({super.key, this.initial});
@@ -159,77 +160,283 @@ class _AnnouncementFormScreenState extends State<AnnouncementFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEdit ? 'Edit Announcement' : 'Create Announcement'),
-      ),
+      appBar: const DashboardAppBar(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: _titleCtrl,
-              decoration: const InputDecoration(labelText: 'Title'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _contentCtrl,
-              maxLines: 6,
-              decoration: const InputDecoration(labelText: 'Content / Description'),
-            ),
-            const SizedBox(height: 12),
-            _buildDropdown(
-              label: 'Type',
-              value: _announcementType,
-              items: const ['General', 'Hazard', 'Emergency Alert'],
-              onChanged: (v) => setState(() => _announcementType = v!),
-            ),
-            const SizedBox(height: 12),
-            _buildDropdown(
-              label: 'Priority',
-              value: _priority,
-              items: const ['High', 'Medium', 'Low'],
-              onChanged: (v) => setState(() => _priority = v!),
-            ),
-            const SizedBox(height: 12),
-            Text('Visibility Scope', style: Theme.of(context).textTheme.labelLarge),
-            Wrap(
-              spacing: 6,
-              children: _allRoles.map((role) {
-                final selected = _selectedRoles.contains(role);
-                return FilterChip(
-                  label: Text(role),
-                  selected: selected,
-                  onSelected: (_) => _toggleRole(role),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                ElevatedButton(
-                  onPressed: _pickAttachment,
-                  child: Text(_attachmentUrl == null ? 'Add Attachment' : 'Change Attachment'),
+            // Header
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(15),
                 ),
-                if (_attachmentUrl != null) ...[
-                  const SizedBox(width: 8),
-                  const Icon(Icons.check_circle_outline, size: 20),
-                ],
-              ],
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: _isEdit ? 'Edit ' : 'Create ',
+                        style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 28),
+                      ),
+                      TextSpan(
+                        text: 'Announcement',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 24),
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: _saving ? null : _handleSubmit,
-                icon: _saving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save),
-                label: Text(_isEdit ? 'Update Announcement' : 'Publish Announcement'),
+
+            // Title field
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black),
+                borderRadius: BorderRadius.circular(8),
               ),
+              child: TextField(
+                controller: _titleCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Content field
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: TextField(
+                controller: _contentCtrl,
+                maxLines: 6,
+                decoration: const InputDecoration(
+                  labelText: 'Content / Description',
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Type dropdown
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: _buildDropdown(
+                label: 'Type',
+                value: _announcementType,
+                items: const ['General', 'Hazard', 'Emergency Alert'],
+                onChanged: (v) => setState(() => _announcementType = v!),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Priority dropdown
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: _buildDropdown(
+                label: 'Priority',
+                value: _priority,
+                items: const ['High', 'Medium', 'Low'],
+                onChanged: (v) => setState(() => _priority = v!),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Visibility scope
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Visibility Scope', 
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87
+                    )
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _allRoles.map((role) {
+                      final selected = _selectedRoles.contains(role);
+                      return FilterChip(
+                        label: Text(role),
+                        selected: selected,
+                        selectedColor: Color(0xFFFEC00F).withOpacity(0.2),
+                        checkmarkColor: Colors.black,
+                        onSelected: (_) => _toggleRole(role),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Buttons row
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // If width is less than 600, stack buttons vertically
+                if (constraints.maxWidth < 600) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Attachment button
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: InkWell(
+                          onTap: _pickAttachment,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.attach_file, color: Colors.blue, size: 16),
+                              const SizedBox(width: 8),
+                              Text(_attachmentUrl == null ? "Add " : "Change ",
+                                style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 16)
+                              ),
+                              Text("Attachment",
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
+                              ),
+                              if (_attachmentUrl != null) ...[
+                                const SizedBox(width: 8),
+                                const Icon(Icons.check_circle_outline, size: 16, color: Colors.green),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Submit button
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: InkWell(
+                          onTap: _saving ? null : _handleSubmit,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_saving)
+                                const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFEC00F)),
+                                  ),
+                                )
+                              else
+                                Icon(Icons.save, color: Colors.blue, size: 16),
+                              const SizedBox(width: 8),
+                              Text(_isEdit ? "Update " : "Publish ",
+                                style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 16)
+                              ),
+                              Text("Announcement",
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                // Otherwise, keep buttons side by side
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Attachment button
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: InkWell(
+                        onTap: _pickAttachment,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.attach_file, color: Colors.blue, size: 16),
+                            const SizedBox(width: 8),
+                            Text(_attachmentUrl == null ? "Add " : "Change ",
+                              style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 16)
+                            ),
+                            Text("Attachment",
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
+                            ),
+                            if (_attachmentUrl != null) ...[
+                              const SizedBox(width: 8),
+                              const Icon(Icons.check_circle_outline, size: 16, color: Colors.green),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Submit button
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: InkWell(
+                        onTap: _saving ? null : _handleSubmit,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_saving)
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFEC00F)),
+                                ),
+                              )
+                            else
+                              Icon(Icons.save, color: Colors.blue, size: 16),
+                            const SizedBox(width: 8),
+                            Text(_isEdit ? "Update " : "Publish ",
+                              style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 16)
+                            ),
+                            Text("Announcement",
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -243,15 +450,19 @@ class _AnnouncementFormScreenState extends State<AnnouncementFormScreen> {
     required List<String> items,
     required ValueChanged<String?> onChanged,
   }) {
-    return InputDecorator(
-      decoration: InputDecoration(labelText: label, border: OutlineInputBorder()),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isDense: true,
-          items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-          onChanged: onChanged,
+    return DropdownButtonHideUnderline(
+      child: DropdownButtonFormField<String>(
+        value: value,
+        decoration: InputDecoration(
+          labelText: label,
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
+        items: items.map((e) => DropdownMenuItem(
+          value: e,
+          child: Text(e),
+        )).toList(),
+        onChanged: onChanged,
       ),
     );
   }

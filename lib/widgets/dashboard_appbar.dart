@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
   const DashboardAppBar({super.key});
 
