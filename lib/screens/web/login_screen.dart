@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class WebLoginScreen extends StatefulWidget {
   @override
@@ -43,6 +44,16 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
           !roles.contains('command_center_admin')) {
           throw 'Only Command Center Personnel can access the web platform.';
         }
+
+        // Save FCM token after login
+        final token = await FirebaseMessaging.instance.getToken();
+        if (token != null) {
+          await FirebaseFirestore.instance.collection('users').doc(uid).update({'fcm_token': token});
+        }
+        // Listen for token refresh
+        FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+          await FirebaseFirestore.instance.collection('users').doc(uid).update({'fcm_token': newToken});
+        });
 
         routeToDashboard(context);
       } catch (e) {
