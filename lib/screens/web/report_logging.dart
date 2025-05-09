@@ -23,7 +23,8 @@ import '../../widgets/mobile/incident_reporting/location_input.dart';
 /// 2. "Manage types" lets admin/operator CRUD incident‑types inline.
 /// 3. Save Incident   /   Save & Export PDF  (placeholder link).
 class ReportLoggingScreen extends StatefulWidget {
-  const ReportLoggingScreen({super.key});
+  final IncidentModel? initialIncident;
+  const ReportLoggingScreen({super.key, this.initialIncident});
   @override
   State<ReportLoggingScreen> createState() => _ReportLoggingScreenState();
 }
@@ -72,6 +73,21 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
     _fetchErtMembers();
     _fetchReports();
     _fetchDispatchTypes();
+    // If editing, pre-fill fields
+    if (widget.initialIncident != null) {
+      final inc = widget.initialIncident!;
+      _title.text = inc.title;
+      _description.text = inc.description;
+      _selectedErtMembers = List<String>.from(inc.dispatchedMembers);
+      _selectedSpecializations = List<String>.from(inc.specializations);
+      _selectedReportIds = List<String>.from(inc.connectedReports);
+      _pickedLocations = List<String>.from(inc.locations);
+      _attachments = List<Map<String, dynamic>>.from(inc.attachments);
+      _status.value = inc.status;
+      // Set _type if possible
+      final type = _incidentTypes.where((t) => t.typeId == inc.type).toList();
+      if (type.isNotEmpty) _type = type.first;
+    }
   }
 
   Future<void> _refreshTypes() async {
@@ -195,6 +211,7 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
               final now = Timestamp.now();
               final model = IncidentModel(
                 incidentId: '',
+                title: t?.name ?? '',
                 type: t!.typeId,
                 locations: [locCtl.text.trim()],
                 status: 'Pending',
@@ -212,6 +229,7 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
               Navigator.pop(context,
                 IncidentModel(
                   incidentId: id,
+                  title: t?.name ?? '',
                   type: model.type,
                   locations: model.locations,
                   status: model.status,
@@ -599,20 +617,39 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User not authenticated');
       final now = Timestamp.now();
-      await FirebaseFirestore.instance.collection('incidents').add({
-        'type': _type?.typeId ?? '',
-        'locations': _pickedLocations,
-        'status': _status.value,
-        'reported_at': now,
-        'created_by': user.uid,
-        'updated_at': now,
-        'updated_by': user.uid,
-        'dispatched_members': _selectedErtMembers,
-        'specializations': _selectedSpecializations,
-        'connected_reports': _selectedReportIds,
-        'description': _description.text.trim(),
-        'attachments': _attachments,
-      });
+      if (widget.initialIncident != null) {
+        // Update existing
+        await FirebaseFirestore.instance.collection('incidents').doc(widget.initialIncident!.incidentId).update({
+          'title': _title.text.trim(),
+          'type': _type?.typeId ?? '',
+          'locations': _pickedLocations,
+          'status': _status.value,
+          'updated_at': now,
+          'updated_by': user.uid,
+          'dispatched_members': _selectedErtMembers,
+          'specializations': _selectedSpecializations,
+          'connected_reports': _selectedReportIds,
+          'description': _description.text.trim(),
+          'attachments': _attachments,
+        });
+      } else {
+        // Create new
+        await FirebaseFirestore.instance.collection('incidents').add({
+          'title': _title.text.trim(),
+          'type': _type?.typeId ?? '',
+          'locations': _pickedLocations,
+          'status': _status.value,
+          'reported_at': now,
+          'created_by': user.uid,
+          'updated_at': now,
+          'updated_by': user.uid,
+          'dispatched_members': _selectedErtMembers,
+          'specializations': _selectedSpecializations,
+          'connected_reports': _selectedReportIds,
+          'description': _description.text.trim(),
+          'attachments': _attachments,
+        });
+      }
       Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));

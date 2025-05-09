@@ -4,6 +4,8 @@ import '../../models/incidents_collection.dart';
 import '../../models/reports_collection.dart';
 import '../../models/incident_types_collection.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:se2_tigersafe/screens/web/report_logging.dart';
+import 'package:se2_tigersafe/screens/web/report_readonly.dart';
 
 class ReportLoggingDashboardScreen extends StatefulWidget {
   const ReportLoggingDashboardScreen({super.key});
@@ -61,11 +63,43 @@ class _ReportLoggingDashboardScreenState extends State<ReportLoggingDashboardScr
             ],
             rows: reports.map((doc) {
               final data = doc.data() as Map<String, dynamic>;
-              return DataRow(cells: [
-                DataCell(Text(data['location'] ?? 'N/A')),
-                DataCell(Text(data['description'] ?? 'N/A')),
-                DataCell(Text(data['timestamp'] != null ? (data['timestamp'] as Timestamp).toDate().toString() : 'N/A')),
-              ]);
+              return DataRow(
+                cells: [
+                  DataCell(
+                    InkWell(
+                      child: Text(data['location'] ?? 'N/A', style: const TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
+                      onTap: () async {
+                        // Fetch user for reporter name
+                        String reporter = data['user_id'] ?? '';
+                        String? profileUrl;
+                        final userDoc = await FirebaseFirestore.instance.collection('users').doc(data['user_id']).get();
+                        if (userDoc.exists) {
+                          final userData = userDoc.data() as Map<String, dynamic>;
+                          reporter = ((userData['first_name'] ?? '') + ' ' + (userData['surname'] ?? '')).trim();
+                          profileUrl = userData['profile_image_url'];
+                        }
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => WebReportReadonlyScreen(
+                              mediaUrls: List<String>.from(data['media_urls'] ?? []),
+                              location: data['location'] ?? '',
+                              description: data['description'] ?? '',
+                              reporter: reporter,
+                              timestamp: (data['timestamp'] as Timestamp).toDate(),
+                              profileUrl: profileUrl,
+                              reportStatus: data['status'] ?? '',
+                              reportId: doc.id,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  DataCell(Text(data['description'] ?? 'N/A')),
+                  DataCell(Text(data['timestamp'] != null ? (data['timestamp'] as Timestamp).toDate().toString() : 'N/A')),
+                ],
+              );
             }).toList(),
           );
         },
@@ -119,84 +153,138 @@ class _ReportLoggingDashboardScreenState extends State<ReportLoggingDashboardScr
                 ? const Center(child: Text('Select an incident to view details.'))
                 : Padding(
                     padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        FutureBuilder<String>(
-                          future: _getIncidentTypeName(_selectedIncident!.type),
-                          builder: (context, typeSnap) {
-                            final typeName = typeSnap.data ?? _selectedIncident!.type;
-                            return Text('Incident Details', style: Theme.of(context).textTheme.headlineSmall);
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        FutureBuilder<String>(
-                          future: _getIncidentTypeName(_selectedIncident!.type),
-                          builder: (context, typeSnap) {
-                            final typeName = typeSnap.data ?? _selectedIncident!.type;
-                            return Text('Type: $typeName');
-                          },
-                        ),
-                        Text('Locations: ${_selectedIncident!.locations.isNotEmpty ? _selectedIncident!.locations.join(", ") : "N/A"}'),
-                        Text('Status: ${_selectedIncident!.status}'),
-                        Text('Reported At: ${_selectedIncident!.reportedAt.toDate()}'),
-                        if (_selectedIncident!.updatedAt != null)
-                          Text('Updated At: ${_selectedIncident!.updatedAt!.toDate()}'),
-                        FutureBuilder<Widget>(
-                          future: _userNameWidget(_selectedIncident!.createdBy),
-                          builder: (context, snap) => snap.hasData ? Row(children: [const Text('Created By: '), snap.data!]) : Text('Created By: ${_selectedIncident!.createdBy}'),
-                        ),
-                        if (_selectedIncident!.updatedBy != null)
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          FutureBuilder<String>(
+                            future: _getIncidentTypeName(_selectedIncident!.type),
+                            builder: (context, typeSnap) {
+                              final typeName = typeSnap.data ?? _selectedIncident!.type;
+                              return Text('Incident Details', style: Theme.of(context).textTheme.headlineSmall);
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          FutureBuilder<String>(
+                            future: _getIncidentTypeName(_selectedIncident!.type),
+                            builder: (context, typeSnap) {
+                              final typeName = typeSnap.data ?? _selectedIncident!.type;
+                              return Text('Type: $typeName');
+                            },
+                          ),
+                          Text('Locations: ${_selectedIncident!.locations.isNotEmpty ? _selectedIncident!.locations.join(", ") : "N/A"}'),
+                          Text('Status: ${_selectedIncident!.status}'),
+                          Text('Reported At: ${_selectedIncident!.reportedAt.toDate()}'),
+                          if (_selectedIncident!.updatedAt != null)
+                            Text('Updated At: ${_selectedIncident!.updatedAt!.toDate()}'),
                           FutureBuilder<Widget>(
-                            future: _userNameWidget(_selectedIncident!.updatedBy!),
-                            builder: (context, snap) => snap.hasData ? Row(children: [const Text('Updated By: '), snap.data!]) : Text('Updated By: ${_selectedIncident!.updatedBy}'),
+                            future: _userNameWidget(_selectedIncident!.createdBy),
+                            builder: (context, snap) => snap.hasData ? Row(children: [const Text('Created By: '), snap.data!]) : Text('Created By: ${_selectedIncident!.createdBy}'),
                           ),
-                        Text('Description: ${_selectedIncident!.description.isNotEmpty ? _selectedIncident!.description : "N/A"}'),
-                        if (_selectedIncident!.attachments.isNotEmpty) ...[
+                          if (_selectedIncident!.updatedBy != null)
+                            FutureBuilder<Widget>(
+                              future: _userNameWidget(_selectedIncident!.updatedBy!),
+                              builder: (context, snap) => snap.hasData ? Row(children: [const Text('Updated By: '), snap.data!]) : Text('Updated By: ${_selectedIncident!.updatedBy}'),
+                            ),
+                          Text('Description: ${_selectedIncident!.description.isNotEmpty ? _selectedIncident!.description : "N/A"}'),
+                          if (_selectedIncident!.attachments.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            const Text('Attachments:'),
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 12,
+                              children: _selectedIncident!.attachments.map((a) {
+                                final url = a['url'] ?? '';
+                                final isImage = url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png');
+                                final isPdf = url.endsWith('.pdf');
+                                if (isImage) {
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(url, width: 120, height: 120, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image)),
+                                  );
+                                } else if (isPdf) {
+                                  return InkWell(
+                                    onTap: () => launchUrl(Uri.parse(url)),
+                                    child: Container(
+                                      width: 120,
+                                      height: 120,
+                                      color: Colors.grey[200],
+                                      child: const Center(child: Icon(Icons.picture_as_pdf, size: 48, color: Colors.red)),
+                                    ),
+                                  );
+                                } else {
+                                  return InkWell(
+                                    onTap: () => launchUrl(Uri.parse(url)),
+                                    child: Container(
+                                      width: 120,
+                                      height: 120,
+                                      color: Colors.grey[300],
+                                      child: const Center(child: Icon(Icons.attach_file, size: 40)),
+                                    ),
+                                  );
+                                }
+                              }).toList(),
+                            ),
+                          ],
+                          if (_selectedIncident!.specializations.isNotEmpty)
+                            Text('Specializations: ${_selectedIncident!.specializations.join(", ")}'),
+                          if (_selectedIncident!.connectedReports.isNotEmpty)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 12),
+                                const Text('Connected Reports:'),
+                                _connectedReportsTable(_selectedIncident!.connectedReports),
+                              ],
+                            ),
+                          const SizedBox(height: 24),
+                          Text('ERT Members', style: Theme.of(context).textTheme.titleMedium),
                           const SizedBox(height: 8),
-                          const Text('Attachments:'),
-                          ..._selectedIncident!.attachments.map((a) => a['url'] != null ? InkWell(
-                            onTap: () => launchUrl(Uri.parse(a['url'])),
-                            child: Text(a['url'], style: const TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
-                          ) : const SizedBox.shrink()),
-                        ],
-                        if (_selectedIncident!.specializations.isNotEmpty)
-                          Text('Specializations: ${_selectedIncident!.specializations.join(", ")}'),
-                        if (_selectedIncident!.connectedReports.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          _selectedIncident!.dispatchedMembers.isEmpty
+                              ? const Text('No ERT members assigned to this incident.')
+                              : FutureBuilder<List<_ERTMemberDisplayInfo>>(
+                                  future: _fetchERTMembers(_selectedIncident!.dispatchedMembers),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState == ConnectionState.waiting) {
+                                      return const Center(child: CircularProgressIndicator());
+                                    }
+                                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                      return const Text('No ERT member details found.');
+                                    }
+                                    final members = snapshot.data!;
+                                    return Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: members.map((m) => ListTile(
+                                        leading: const Icon(Icons.person),
+                                        title: Text(m.name),
+                                        subtitle: Text('Specialization: ${m.specialization} | Status: ${m.status}'),
+                                      )).toList(),
+                                    );
+                                  },
+                                ),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              const SizedBox(height: 12),
-                              const Text('Connected Reports:'),
-                              _connectedReportsTable(_selectedIncident!.connectedReports),
-                            ],
-                          ),
-                        const SizedBox(height: 24),
-                        Text('ERT Members', style: Theme.of(context).textTheme.titleMedium),
-                        const SizedBox(height: 8),
-                        _selectedIncident!.dispatchedMembers.isEmpty
-                            ? const Text('No ERT members assigned to this incident.')
-                            : FutureBuilder<List<_ERTMemberDisplayInfo>>(
-                                future: _fetchERTMembers(_selectedIncident!.dispatchedMembers),
-                                builder: (context, snapshot) {
-                                  if (snapshot.connectionState == ConnectionState.waiting) {
-                                    return const Center(child: CircularProgressIndicator());
-                                  }
-                                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                                    return const Text('No ERT member details found.');
-                                  }
-                                  final members = snapshot.data!;
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: members.map((m) => ListTile(
-                                      leading: const Icon(Icons.person),
-                                      title: Text(m.name),
-                                      subtitle: Text('Specialization: ${m.specialization} | Status: ${m.status}'),
-                                    )).toList(),
+                              ElevatedButton.icon(
+                                icon: const Icon(Icons.edit),
+                                label: const Text('Edit'),
+                                onPressed: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ReportLoggingScreen(
+                                        key: UniqueKey(),
+                                        initialIncident: _selectedIncident,
+                                      ),
+                                    ),
                                   );
                                 },
                               ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
           ),

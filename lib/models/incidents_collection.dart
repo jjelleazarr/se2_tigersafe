@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class IncidentModel {
   final String incidentId;
+  final String title;
   final String type;
   final List<String> locations;
   final String status;
@@ -17,6 +18,7 @@ class IncidentModel {
 
   IncidentModel({
     required this.incidentId,
+    required this.title,
     required this.type,
     required this.locations,
     required this.status,
@@ -33,6 +35,7 @@ class IncidentModel {
 
   factory IncidentModel.fromJson(Map<String, dynamic> j, String id) => IncidentModel(
         incidentId: id,
+        title: j['title'] as String? ?? '',
         type: j['type'] as String,
         locations: List<String>.from(j['locations'] ?? []),
         status: j['status'] as String,
@@ -48,6 +51,7 @@ class IncidentModel {
       );
 
   Map<String, dynamic> toJson() => {
+        'title': title,
         'type': type,
         'locations': locations,
         'status': status,
