@@ -241,6 +241,7 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
                       'location': _location,
                       'incidentType': incidentType ?? '',
                       'description': _description,
+                      'recipientType': 'ert',
                     });
                   }
                 }

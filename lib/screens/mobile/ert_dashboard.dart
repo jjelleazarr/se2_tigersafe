@@ -1,40 +1,80 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_left.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:se2_tigersafe/screens/mobile/incident_reporting.dart';
+import 'package:se2_tigersafe/screens/mobile/ert_dispatch_detail.dart';
 
 class ERTDashboardScreen extends StatefulWidget {
-  final bool medicalTeam;
-  final bool ambulance;
-  final bool stretcher;
-  final bool hazardTeam;
-  final bool security;
-  final String? incidentType;
-  final String? severity;
-
-  const ERTDashboardScreen({
-    super.key,
-    this.medicalTeam = false,
-    this.ambulance = false,
-    this.stretcher = false,
-    this.hazardTeam = false,
-    this.security = false,
-    this.incidentType,
-    this.severity,
-  });
+  const ERTDashboardScreen({super.key});
 
   @override
   State<ERTDashboardScreen> createState() => _ERTDashboardScreenState();
 }
 
 class _ERTDashboardScreenState extends State<ERTDashboardScreen> {
+  String? _specialization;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSpecialization();
+  }
+
+  Future<void> _fetchSpecialization() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+    final snap = await FirebaseFirestore.instance
+        .collection('ert_members')
+        .where('user_id', isEqualTo: userId)
+        .limit(1)
+        .get();
+    if (snap.docs.isNotEmpty) {
+      setState(() {
+        _specialization = snap.docs.first['specialization'] as String?;
+      });
+    }
+  }
+
+  Stream<List<Map<String, dynamic>>> _getRelevantDispatchesStream(String specialization) {
+    final Map<String, List<String>> specializationToDispatchFields = {
+      'medical': ['medical_team', 'ambulance', 'stretcher'],
+      'security': ['security'],
+      'others': ['hazard_team'],
+    };
+    final fields = specializationToDispatchFields[specialization] ?? [];
+    if (fields.isEmpty) return Stream.value([]);
+    return FirebaseFirestore.instance.collection('dispatches').snapshots().map((snap) {
+      return snap.docs.where((doc) {
+        final data = doc.data();
+        return fields.any((field) => data[field] == true);
+      }).map((doc) => doc.data()).toList();
+    });
+  }
+
   void _setScreen(String identifier) {
     Navigator.of(context).pop();
   }
 
+  double _getResponsiveWidth(double screenWidth) {
+    if (screenWidth < 300) return 300;
+    if (screenWidth > 500) return 500;
+    return 350;
+  }
+
+  double _getReportingCardHeight(double screenWidth) {
+    if (screenWidth < 300) return 80;
+    if (screenWidth > 500) return 90;
+    return 90;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final double containerWidth = _getResponsiveWidth(screenWidth);
+    final double reportingCardHeight = _getReportingCardHeight(screenWidth);
     return Scaffold(
       appBar: const DashboardAppBar(),
       drawer: DashboardDrawerLeft(onSelectScreen: _setScreen),
@@ -76,7 +116,7 @@ class _ERTDashboardScreenState extends State<ERTDashboardScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // 📋 Scrollable Reports Section
+                    // 📋 Scrollable Reports Section (now real-time)
                     Container(
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.black, width: 1.5),
@@ -97,30 +137,56 @@ class _ERTDashboardScreenState extends State<ERTDashboardScreen> {
                               ),
                             ),
                           ),
-                          SizedBox( //Need the back end part 
+                          SizedBox(
                             height: 300, // make scrollable section fixed height
-                            child: ListView.builder(
-                              itemCount: 10, // You can change this or use real data
-                              itemBuilder: (context, index) {
-                                return ListTile(
-                                  leading: const Icon(Icons.location_on, color: Colors.amber),
-                                  title: Text("Location: UST Report #$index"),
-                                  subtitle: const Text("Status: Dispatched"),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: const [
-                                      Chip(
-                                        label: Text("Fire"),
-                                        backgroundColor: Colors.red,
-                                        labelStyle: TextStyle(color: Colors.white),
-                                      ),
-                                      SizedBox(width: 8),
-                                      Icon(Icons.arrow_forward_ios, size: 16),
-                                    ],
+                            child: _specialization == null
+                                ? const Center(child: CircularProgressIndicator())
+                                : StreamBuilder<List<Map<String, dynamic>>>(
+                                    stream: _getRelevantDispatchesStream(_specialization!),
+                                    builder: (context, snapshot) {
+                                      if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                                      final dispatches = snapshot.data!;
+                                      if (dispatches.isEmpty) {
+                                        return const Center(child: Text('No reports found.'));
+                                      }
+                                      return ListView.builder(
+                                        itemCount: dispatches.length,
+                                        itemBuilder: (context, index) {
+                                          final dispatch = dispatches[index];
+                                          return ListTile(
+                                            leading: const Icon(Icons.location_on, color: Colors.amber),
+                                            title: Text("Location: "+(dispatch['location'] ?? 'Unknown')),
+                                            subtitle: Text("Status: "+(dispatch['status'] ?? 'Dispatched')+"\n"+(dispatch['description'] ?? '')),
+                                            trailing: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                if (dispatch['incident_type'] != null)
+                                                  Chip(
+                                                    label: Text(
+                                                      (dispatch['incident_type'] as String).split(' ').join('\n'),
+                                                      style: const TextStyle(fontSize: 12),
+                                                      textAlign: TextAlign.center,
+                                                    ),
+                                                    backgroundColor: Colors.red,
+                                                    labelPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                                                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                  ),
+                                                const SizedBox(width: 8),
+                                                const Icon(Icons.arrow_forward_ios, size: 16),
+                                              ],
+                                            ),
+                                            onTap: () {
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (context) => ERTDispatchDetailScreen(dispatch: dispatch),
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                      );
+                                    },
                                   ),
-                                );
-                              },
-                            ),
                           )
                         ],
                       ),
@@ -130,6 +196,8 @@ class _ERTDashboardScreenState extends State<ERTDashboardScreen> {
 
                     // ☎️ Emergency
                     _reportingButton(
+                      width: containerWidth,
+                      height: reportingCardHeight,
                       icon: Icons.phone,
                       iconColor: Colors.black,
                       text: "Emergency",
@@ -139,6 +207,8 @@ class _ERTDashboardScreenState extends State<ERTDashboardScreen> {
 
                     // 📝 Incident
                     _reportingButton(
+                      width: containerWidth,
+                      height: reportingCardHeight,
                       icon: Icons.assignment,
                       iconColor: Colors.black,
                       text: "Incident",
@@ -163,6 +233,8 @@ class _ERTDashboardScreenState extends State<ERTDashboardScreen> {
   }
 
   Widget _reportingButton({
+    required double width,
+    required double height,
     required IconData icon,
     required Color iconColor,
     required String text,
@@ -173,12 +245,12 @@ class _ERTDashboardScreenState extends State<ERTDashboardScreen> {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        height: 80,
-        width: double.infinity,
+        height: height,
+        width: width,
         margin: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.black, width: 1.5),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(5),
         ),
         child: Row(
           children: [
@@ -189,7 +261,7 @@ class _ERTDashboardScreenState extends State<ERTDashboardScreen> {
                 border: Border(right: BorderSide(color: Colors.black, width: 1.5)),
               ),
               child: Center(
-                child: Icon(icon, color: iconColor, size: 36),
+                child: Icon(icon, color: iconColor, size: 40),
               ),
             ),
             Expanded(
