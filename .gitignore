@@ -46,5 +46,3 @@ app.*.map.json
 
 # Node and NPM
 node_modules/
-package-lock.json
-package.json
