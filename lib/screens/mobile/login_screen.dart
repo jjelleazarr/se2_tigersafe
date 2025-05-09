@@ -5,6 +5,8 @@ import 'package:se2_tigersafe/controllers/login_controller.dart';
 import 'package:se2_tigersafe/controllers/users_controller.dart';
 import 'package:se2_tigersafe/controllers/verification_requests_controller.dart';
 import 'package:sign_in_button/sign_in_button.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MobileLoginScreen extends StatefulWidget {
   const MobileLoginScreen({super.key});
@@ -40,6 +42,16 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
         if (userCredential != null) {
           final user = userCredential.user;
           if (user == null) return;
+
+          // Save FCM token after successful login
+          final token = await FirebaseMessaging.instance.getToken();
+          if (token != null) {
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .update({'fcm_token': token});
+            print('FCM token saved for user: ${user.uid}');
+          }
 
           final userDoc = await _userController.getUser(user.uid);
 
@@ -84,6 +96,16 @@ class _MobileLoginScreenState extends State<MobileLoginScreen> {
 
       final user = userCredential.user;
       if (user == null) return;
+
+      // Save FCM token after successful Google sign-in
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'fcm_token': token});
+        print('FCM token saved for user: ${user.uid}');
+      }
 
       final userDoc = await _userController.getUser(user.uid);
 

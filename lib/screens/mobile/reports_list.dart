@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
-import 'package:se2_tigersafe/widgets/footer.dart'; // Import Footer Widget
+import 'package:se2_tigersafe/widgets/footer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ReportsListScreen extends StatefulWidget {
   const ReportsListScreen({super.key});
@@ -11,6 +13,25 @@ class ReportsListScreen extends StatefulWidget {
 }
 
 class _ReportsListScreenState extends State<ReportsListScreen> {
+  late Future<List<Map<String, dynamic>>> _reportsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _reportsFuture = _fetchUserReports();
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchUserReports() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return [];
+    final snapshot = await FirebaseFirestore.instance
+        .collection('reports')
+        .where('created_by', isEqualTo: user.uid)
+        .orderBy('timestamp', descending: true)
+        .get();
+    return snapshot.docs.map((doc) => doc.data()).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,20 +53,29 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
       ),
       body: Column(
         children: [
-          // Reports List
           Expanded(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.black, width: 1.5),
-              ),
-              child: ListView(
-                children: [
-                  _reportItem("Incident Report", "Fire", const Color(0xFFFF0000)),
-                  _reportItem("Incident Report", "Robbery", const Color(0xFF104BC0)),
-                  _reportItem("Emergency Report", "Fire", const Color(0xFFFF0000)),
-                ],
-              ),
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: _reportsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No reports found.'));
+                }
+                final reports = snapshot.data!;
+                return ListView.builder(
+                  itemCount: reports.length,
+                  itemBuilder: (context, index) {
+                    final report = reports[index];
+                    return _reportItem(
+                      report['type'] ?? 'Report',
+                      report['status'] ?? 'Unknown',
+                      _statusColor(report['status'] ?? ''),
+                    );
+                  },
+                );
+              },
             ),
           ),
           const Footer(),
@@ -93,5 +123,20 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
         ],
       ),
     );
+  }
+
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'fire':
+        return const Color(0xFFFF0000);
+      case 'robbery':
+        return const Color(0xFF104BC0);
+      case 'pending':
+        return Colors.orange;
+      case 'resolved':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
   }
 }

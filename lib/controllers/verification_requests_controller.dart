@@ -3,10 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models/verification_requests_collection.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class VerificationRequestsController {
   final CollectionReference _verificationRef =
       FirebaseFirestore.instance.collection('verification_requests');
+  final CollectionReference _usersRef = FirebaseFirestore.instance.collection('users');
 
   /// Submit a new verification request using the model object
   Future<void> submitRequest(
@@ -78,6 +80,71 @@ class VerificationRequestsController {
     }
   }
 
+  /// Send notification to user about their verification request status
+  Future<void> _sendVerificationNotification({
+    required String userId,
+    required String status,
+    required String requestType,
+  }) async {
+    try {
+      // Get user's FCM token
+      final userDoc = await _usersRef.doc(userId).get();
+      if (!userDoc.exists) {
+        print('User document not found for ID: $userId');
+        return;
+      }
+      
+      final userData = userDoc.data() as Map<String, dynamic>;
+      final fcmToken = userData['fcm_token'] as String?;
+      
+      if (fcmToken == null) {
+        print('No FCM token found for user: $userId');
+        return;
+      }
+
+      print('Sending verification notification to token: $fcmToken');
+      
+      // Send notification using Firebase Cloud Messaging
+      final message = {
+        'token': fcmToken,
+        'notification': {
+          'title': 'Verification Request $status',
+          'body': 'Your $requestType verification request has been $status',
+        },
+        'data': {
+          'type': 'verification',
+          'status': status.toLowerCase(),
+          'requestType': requestType.toLowerCase(),
+          'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+        },
+        'android': {
+          'priority': 'high',
+          'notification': {
+            'channel_id': 'default_channel',
+            'priority': 'high',
+            'default_sound': true,
+            'default_vibrate_timings': true,
+            'default_light_settings': true,
+          },
+        },
+      };
+
+      // Send using Firebase Admin SDK (you'll need to set this up on your backend)
+      // For now, we'll use the Firebase Console to send the notification
+      print('Notification payload: $message');
+      
+      // TODO: Replace with actual FCM send implementation
+      // This is just for testing - in production, use Firebase Admin SDK
+      await FirebaseMessaging.instance.sendMessage(
+        to: fcmToken,
+        data: message['data'] as Map<String, String>,
+      );
+      
+    } catch (e) {
+      print('Error sending verification notification: $e');
+    }
+  }
+
   /// Approve or reject a request (admin flow)
   Future<void> updateRequestStatus({
     required String requestId,
@@ -85,13 +152,40 @@ class VerificationRequestsController {
     required String adminId,
   }) async {
     try {
+      // Get the request details first
+      final requestDoc = await _verificationRef.doc(requestId).get();
+      if (!requestDoc.exists) {
+        print('Verification request not found: $requestId');
+        return;
+      }
+
+      final request = VerificationRequestModel.fromJson(
+        requestDoc.data() as Map<String, dynamic>,
+        requestDoc.id,
+      );
+
+      // Update request status
       await _verificationRef.doc(requestId).update({
         'account_status': newStatus,
         'admin_id': adminId,
         'reviewed_at': Timestamp.now(),
       });
+
+      print('Request status updated to: $newStatus');
+
+      // Send notification to user
+      final requestType = request.roles.contains('emergency_response_team') 
+          ? 'Emergency Response Team' 
+          : 'Stakeholder';
+      
+      await _sendVerificationNotification(
+        userId: request.submittedBy,
+        status: newStatus,
+        requestType: requestType,
+      );
     } catch (e) {
       print('Error updating request: $e');
+      rethrow;
     }
   }
 
