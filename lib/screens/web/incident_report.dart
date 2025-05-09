@@ -8,6 +8,8 @@ import 'package:se2_tigersafe/widgets/web/incident_report/user_info_card.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 import 'package:intl/intl.dart';
+import 'package:se2_tigersafe/utils/notification_service.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class WebIncidentReportScreen extends StatefulWidget {
   const WebIncidentReportScreen({
@@ -127,6 +129,19 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
                   .doc(_reportId)
                   .update({'status': 'Dropped', 'dropReason': drop_reason});
 
+              // Fetch created_by for notification
+              final reportDoc = await FirebaseFirestore.instance.collection('reports').doc(_reportId).get();
+              final createdBy = reportDoc.data()?['created_by'];
+              if (createdBy != null) {
+                await NotificationService.sendReportStatusUpdate(
+                  userId: createdBy,
+                  reportId: _reportId,
+                  newStatus: 'Dropped',
+                  location: _location,
+                  incidentType: incidentType,
+                );
+              }
+
               // Notify the user
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Report dropped: $drop_reason')),
@@ -186,6 +201,62 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
                     .doc(_reportId)
                     .update({'status': 'Personnel Dispatched'});
                 print("Report status updated to 'Personnel Dispatched'");
+
+                // Notify ERT members by specialization
+                List<String> responderTypes = [];
+                if (medicalTeam) responderTypes.add('medical_team');
+                if (ambulance) responderTypes.add('ambulance');
+                if (stretcher) responderTypes.add('stretcher');
+                if (hazardTeam) responderTypes.add('hazard_team');
+                if (security) responderTypes.add('security');
+
+                final Map<String, String> typeToSpecialization = {
+                  'medical_team': 'medical',
+                  'ambulance': 'medical',
+                  'stretcher': 'medical',
+                  'security': 'security',
+                  'hazard_team': 'others',
+                };
+                final Set<String> specializations = responderTypes
+                    .map((type) => typeToSpecialization[type])
+                    .where((spec) => spec != null)
+                    .cast<String>()
+                    .toSet();
+
+                for (final specialization in specializations) {
+                  final ertMembersSnap = await FirebaseFirestore.instance
+                      .collection('ert_members')
+                      .where('specialization', isEqualTo: specialization)
+                      .get();
+                  for (final memberDoc in ertMembersSnap.docs) {
+                    final userId = memberDoc['user_id'];
+                    final userSnap = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+                    final fcmToken = userSnap.data()?['fcm_token'];
+                    if (fcmToken == null) continue;
+                    final callable = FirebaseFunctions.instance.httpsCallable('sendReportStatusNotification');
+                    await callable.call({
+                      'userId': userId,
+                      'reportId': _reportId,
+                      'newStatus': 'Dispatched',
+                      'location': _location,
+                      'incidentType': incidentType ?? '',
+                      'description': _description,
+                    });
+                  }
+                }
+
+                // Fetch created_by for notification
+                final reportDoc = await FirebaseFirestore.instance.collection('reports').doc(_reportId).get();
+                final createdBy = reportDoc.data()?['created_by'];
+                if (createdBy != null) {
+                  await NotificationService.sendReportStatusUpdate(
+                    userId: createdBy,
+                    reportId: _reportId,
+                    newStatus: 'Personnel Dispatched',
+                    location: _location,
+                    incidentType: incidentType,
+                  );
+                }
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Error: $e')),
@@ -222,6 +293,18 @@ class _WebIncidentReportScreenState extends State<WebIncidentReportScreen> {
                     .doc(_reportId)
                     .update({'status': 'Resolved'});
 
+                // Fetch created_by for notification
+                final reportDoc = await FirebaseFirestore.instance.collection('reports').doc(_reportId).get();
+                final createdBy = reportDoc.data()?['created_by'];
+                if (createdBy != null) {
+                  await NotificationService.sendReportStatusUpdate(
+                    userId: createdBy,
+                    reportId: _reportId,
+                    newStatus: 'Resolved',
+                    location: _location,
+                    incidentType: incidentType,
+                  );
+                }
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Error: $e')),

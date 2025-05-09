@@ -142,7 +142,7 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
         }
       });
     }
-    setState(() {
+      setState(() {
       _dispatchTypes = types.toList()..sort();
     });
   }
@@ -316,65 +316,65 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
         throw Exception('User not authenticated');
       }
 
-      // upload files
-      final urls = <String>[];
-      for (int i = 0; i < _files.length; i++) {
+    // upload files
+    final urls = <String>[];
+    for (int i = 0; i < _files.length; i++) {
         try {
-          final url = await _reportsCtrl.uploadAttachment(
-              _files[i], 'report_${_incident!.incidentId}_${DateTime.now().millisecondsSinceEpoch}_$i');
-          urls.add(url);
+      final url = await _reportsCtrl.uploadAttachment(
+          _files[i], 'report_${_incident!.incidentId}_${DateTime.now().millisecondsSinceEpoch}_$i');
+      urls.add(url);
         } catch (e) {
           debugPrint('Error uploading file $i: $e');
           // Continue with other files even if one fails
         }
-      }
+    }
 
-      // build model
-      final model = ReportModel(
-        reportId: '',
-        incidentId: _incident!.incidentId,
+    // build model
+    final model = ReportModel(
+      reportId: '',
+      incidentId: _incident!.incidentId,
         userId: user.uid,
-        typeId: _type?.typeId ?? '',
-        description: _description.text.trim(),
-        location: _location.text.trim(),
-        status: _status.value,
-        resolvedBy: _resolvedBy.text.trim().isEmpty ? null : _resolvedBy.text.trim(),
-        reportedAt: Timestamp.fromDate(_when ?? DateTime.now()),
-        mediaUrls: urls,
-        exportUrl: null,
-      );
+      typeId: _type?.typeId ?? '',
+      description: _description.text.trim(),
+      location: _location.text.trim(),
+      status: _status.value,
+      resolvedBy: _resolvedBy.text.trim().isEmpty ? null : _resolvedBy.text.trim(),
+      reportedAt: Timestamp.fromDate(_when ?? DateTime.now()),
+      mediaUrls: urls,
+      exportUrl: null,
+    );
 
-      final reportId = await _reportsCtrl.createReport(model);
+    final reportId = await _reportsCtrl.createReport(model);
 
-      String? pdfUrl;
-      if (export) {
+    String? pdfUrl;
+    if (export) {
         try {
           pdfUrl = await _reportsCtrl.generatePdf(reportId);
-          await _reportsCtrl.updateReport(reportId, {'export_url': pdfUrl});
+      await _reportsCtrl.updateReport(reportId, {'export_url': pdfUrl});
         } catch (e) {
           debugPrint('Error generating PDF: $e');
           // Continue even if PDF generation fails
         }
-      }
+    }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(export ? 'Incident saved & exported' : 'Incident saved'),
-          action: pdfUrl != null
-              ? SnackBarAction(label: 'Download', onPressed: () => launchUrl(Uri.parse(pdfUrl!)))
-              : null,
-        ));
-      }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(export ? 'Incident saved & exported' : 'Incident saved'),
+        action: pdfUrl != null
+            ? SnackBarAction(label: 'Download', onPressed: () => launchUrl(Uri.parse(pdfUrl!)))
+            : null,
+      ));
+    }
 
-      // clear only per‑report fields
-      setState(() {
-        _saving = false;
-        _description.clear();
-        _files.clear();
-        _when = null;
-        _status.value = 'Pending';
-        _resolvedBy.clear();
-      });
+    // clear only per‑report fields
+    setState(() {
+      _saving = false;
+      _description.clear();
+      _files.clear();
+      _when = null;
+      _status.value = 'Pending';
+      _resolvedBy.clear();
+    });
     } catch (e) {
       debugPrint('Error saving report: $e');
       if (mounted) {
@@ -409,9 +409,9 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
         padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
               // Header
               Center(
                 child: Container(
@@ -422,7 +422,7 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
                   ),
                   child: Text.rich(
                     TextSpan(
-                      children: [
+              children: [
                         TextSpan(
                           text: 'Create/Edit ',
                           style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 28),
@@ -435,8 +435,8 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                      ),
+                      const SizedBox(height: 24),
               // Title field
               Container(
                 decoration: BoxDecoration(
@@ -531,10 +531,10 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: DropdownButtonFormField<IncidentTypeModel>(
-                  value: _type,
-                  items: _types
+                                      value: _type,
+                                      items: _types
                       .map((t) => DropdownMenuItem(value: t, child: Text(t.name)))
-                      .toList(),
+                                          .toList(),
                   onChanged: (v) => setState(() => _type = v),
                   decoration: const InputDecoration(
                     labelText: 'Incident Type',
@@ -543,8 +543,8 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
                   ),
                   validator: (v) => v == null ? 'Select a type' : null,
                 ),
-              ),
-              const SizedBox(height: 12),
+                                    ),
+                                    const SizedBox(height: 12),
               // Connect Reports (table)
               ConnectedReportsTable(
                 allReports: _allReports,
@@ -555,8 +555,8 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
                   });
                 },
                 incidentTypes: _incidentTypes,
-              ),
-              const SizedBox(height: 12),
+                                    ),
+                                    const SizedBox(height: 12),
               // Multi-select Location
               if (_selectedReportIds.isNotEmpty)
                 Container(
@@ -612,11 +612,11 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
                     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
+                                    ),
+                                    const SizedBox(height: 12),
               // ERT Members Multi-select
               Container(
-                decoration: BoxDecoration(
+                                            decoration: BoxDecoration(
                   border: Border.all(color: Colors.black),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -708,12 +708,12 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
                         SizedBox(width: 8),
                         Text("Save ", style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 16)),
                         Text("Incident", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
               ),
-            ],
+            ),
+          ],
           ),
         ),
       ),
@@ -902,14 +902,14 @@ class _TypeManagerDialogState extends State<_TypeManagerDialog> {
                     onPressed: () async {
                       if (!form.currentState!.validate()) return;
                       try {
-                        final n = int.parse(prioCtl.text);
-                        if (type == null) {
-                          await widget.controller.addIncidentType(
-                              nameCtl.text.trim(), descCtl.text.trim(), n);
-                        } else {
-                          await widget.controller.updateIncidentType(
-                              type.typeId, nameCtl.text.trim(), descCtl.text.trim(), n);
-                        }
+                      final n = int.parse(prioCtl.text);
+                      if (type == null) {
+                        await widget.controller.addIncidentType(
+                            nameCtl.text.trim(), descCtl.text.trim(), n);
+                      } else {
+                        await widget.controller.updateIncidentType(
+                            type.typeId, nameCtl.text.trim(), descCtl.text.trim(), n);
+                      }
                         if (context.mounted) {
                           Navigator.pop(context);
                           _refresh();
