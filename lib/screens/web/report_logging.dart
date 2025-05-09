@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 
 import '../../controllers/incidents_controller.dart';
 import '../../controllers/incident_types_controller.dart';
@@ -403,11 +404,7 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
         .toSet()
         .toList();
     return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(color: Theme.of(context).colorScheme.onPrimary),
-        title: const Text('Create/Edit Incident'),
-        centerTitle: true,
-      ),
+      appBar: const DashboardAppBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -415,52 +412,104 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextFormField(
-                controller: _title,
-                decoration: const InputDecoration(labelText: 'Title'),
-                validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+              // Header
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Create/Edit ',
+                          style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 28),
+                        ),
+                        TextSpan(
+                          text: 'Incident',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Title field
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: TextFormField(
+                  controller: _title,
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                ),
               ),
               const SizedBox(height: 12),
               // Description field
-              TextFormField(
-                controller: _description,
-                decoration: const InputDecoration(labelText: 'Description'),
-                maxLines: 3,
-                validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: TextFormField(
+                  controller: _description,
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  maxLines: 3,
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                ),
               ),
               const SizedBox(height: 12),
               // Attachments upload
-              Row(
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: _saving ? null : () async {
-                      final res = await FilePicker.platform.pickFiles(allowMultiple: true, withData: true);
-                      if (res == null) return;
-                      final user = FirebaseAuth.instance.currentUser;
-                      if (user == null) return;
-                      setState(() => _saving = true);
-                      for (final file in res.files) {
-                        if (file.bytes != null) {
-                          // Upload file and get URL
-                          final url = await _reportsCtrl.uploadAttachment(
-                            file.bytes!,
-                            'incident_attachment_${user.uid}_${DateTime.now().millisecondsSinceEpoch}_${file.name}',
-                          );
-                          _attachments.add({
-                            'type': file.extension ?? 'file',
-                            'url': url,
-                          });
-                        }
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: InkWell(
+                  onTap: _saving ? null : () async {
+                    final res = await FilePicker.platform.pickFiles(allowMultiple: true, withData: true);
+                    if (res == null) return;
+                    final user = FirebaseAuth.instance.currentUser;
+                    if (user == null) return;
+                    setState(() => _saving = true);
+                    for (final file in res.files) {
+                      if (file.bytes != null) {
+                        final url = await _reportsCtrl.uploadAttachment(
+                          file.bytes!,
+                          'incident_attachment_${user.uid}_${DateTime.now().millisecondsSinceEpoch}_${file.name}',
+                        );
+                        _attachments.add({
+                          'type': file.extension ?? 'file',
+                          'url': url,
+                        });
                       }
-                      setState(() => _saving = false);
-                    },
-                    icon: const Icon(Icons.attach_file),
-                    label: const Text('Add Attachments'),
+                    }
+                    setState(() => _saving = false);
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.attach_file, color: Colors.blue, size: 16),
+                      SizedBox(width: 8),
+                      Text("Add ", style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text("Attachments", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  if (_attachments.isNotEmpty)
-                    Text('${_attachments.length} file(s) attached'),
-                ],
+                ),
               ),
               if (_attachments.isNotEmpty)
                 Padding(
@@ -475,14 +524,25 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
                   ),
                 ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<IncidentTypeModel>(
-                value: _type,
-                items: _types
-                    .map((t) => DropdownMenuItem(value: t, child: Text(t.name)))
-                    .toList(),
-                onChanged: (v) => setState(() => _type = v),
-                decoration: const InputDecoration(labelText: 'Incident Type'),
-                validator: (v) => v == null ? 'Select a type' : null,
+              // Incident Type dropdown
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonFormField<IncidentTypeModel>(
+                  value: _type,
+                  items: _types
+                      .map((t) => DropdownMenuItem(value: t, child: Text(t.name)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _type = v),
+                  decoration: const InputDecoration(
+                    labelText: 'Incident Type',
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  validator: (v) => v == null ? 'Select a type' : null,
+                ),
               ),
               const SizedBox(height: 12),
               // Connect Reports (table)
@@ -497,22 +557,97 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
                 incidentTypes: _incidentTypes,
               ),
               const SizedBox(height: 12),
-              // Multi-select Location (enabled only if reports are selected)
+              // Multi-select Location
               if (_selectedReportIds.isNotEmpty)
-                InputDecorator(
-                  decoration: const InputDecoration(labelText: 'Incident Location(s)'),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Incident Location(s)',
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    child: Column(
+                      children: availableLocations.map((loc) {
+                        final selected = _pickedLocations.contains(loc);
+                        return CheckboxListTile(
+                          value: selected,
+                          title: Text(loc),
+                          onChanged: (checked) {
+                            setState(() {
+                              if (checked == true) {
+                                _pickedLocations.add(loc);
+                              } else {
+                                _pickedLocations.remove(loc);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              if (_selectedReportIds.isNotEmpty) const SizedBox(height: 12),
+              // Status dropdown
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: _status.value,
+                  items: const [
+                    DropdownMenuItem(value: 'Pending', child: Text('Pending')),
+                    DropdownMenuItem(value: 'Personnel Dispatched', child: Text('Personnel Dispatched')),
+                    DropdownMenuItem(value: 'Resolved', child: Text('Resolved')),
+                    DropdownMenuItem(value: 'Dropped', child: Text('Dropped')),
+                  ],
+                  onChanged: (v) => setState(() => _status.value = v!),
+                  decoration: const InputDecoration(
+                    labelText: 'Status',
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // ERT Members Multi-select
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'ERT Members',
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
                   child: Column(
-                    children: availableLocations.map((loc) {
-                      final selected = _pickedLocations.contains(loc);
+                    children: _ertMembers.map((m) {
+                      final selected = _selectedErtMembers.contains(m['id']);
                       return CheckboxListTile(
                         value: selected,
-                        title: Text(loc),
+                        title: FutureBuilder<DocumentSnapshot>(
+                          future: FirebaseFirestore.instance.collection('users').doc(m['user_id']).get(),
+                          builder: (context, userSnap) {
+                            String name = m['user_id'];
+                            if (userSnap.hasData && userSnap.data!.exists) {
+                              final userData = userSnap.data!.data() as Map<String, dynamic>;
+                              name = '${userData['first_name'] ?? ''} ${userData['surname'] ?? ''}'.trim();
+                            }
+                            return Text('$name (${m['specialization'] ?? 'N/A'}) - ${m['status'] ?? ''}');
+                          },
+                        ),
                         onChanged: (checked) {
                           setState(() {
                             if (checked == true) {
-                              _pickedLocations.add(loc);
+                              _selectedErtMembers.add(m['id']);
                             } else {
-                              _pickedLocations.remove(loc);
+                              _selectedErtMembers.remove(m['id']);
                             }
                           });
                         },
@@ -520,85 +655,63 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
                     }).toList(),
                   ),
                 ),
-              if (_selectedReportIds.isNotEmpty) const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _status.value,
-                items: const [
-                  DropdownMenuItem(value: 'Pending', child: Text('Pending')),
-                  DropdownMenuItem(value: 'Personnel Dispatched', child: Text('Personnel Dispatched')),
-                  DropdownMenuItem(value: 'Resolved', child: Text('Resolved')),
-                  DropdownMenuItem(value: 'Dropped', child: Text('Dropped')),
-                ],
-                onChanged: (v) => setState(() => _status.value = v!),
-                decoration: const InputDecoration(labelText: 'Status'),
               ),
               const SizedBox(height: 12),
-              // ERT Members Multi-select
-              InputDecorator(
-                decoration: const InputDecoration(labelText: 'ERT Members'),
-                child: Column(
-                  children: _ertMembers.map((m) {
-                    final selected = _selectedErtMembers.contains(m['id']);
-                    return CheckboxListTile(
-                      value: selected,
-                      title: FutureBuilder<DocumentSnapshot>(
-                        future: FirebaseFirestore.instance.collection('users').doc(m['user_id']).get(),
-                        builder: (context, userSnap) {
-                          String name = m['user_id'];
-                          if (userSnap.hasData && userSnap.data!.exists) {
-                            final userData = userSnap.data!.data() as Map<String, dynamic>;
-                            name = '${userData['first_name'] ?? ''} ${userData['surname'] ?? ''}'.trim();
-                          }
-                          return Text('$name (${m['specialization'] ?? 'N/A'}) - ${m['status'] ?? ''}');
-                        },
-                      ),
-                      onChanged: (checked) {
-                        setState(() {
-                          if (checked == true) {
-                            _selectedErtMembers.add(m['id']);
-                          } else {
-                            _selectedErtMembers.remove(m['id']);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
+              // Specializations
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ),
-              const SizedBox(height: 12),
-              // Specializations (dynamic multi-select)
-              InputDecorator(
-                decoration: const InputDecoration(labelText: 'Specializations/Dispatch Types'),
-                child: Column(
-                  children: _dispatchTypes.map((spec) {
-                    final selected = _selectedSpecializations.contains(spec);
-                    return CheckboxListTile(
-                      value: selected,
-                      title: Text(spec),
-                      onChanged: (checked) {
-                        setState(() {
-                          if (checked == true) {
-                            _selectedSpecializations.add(spec);
-                          } else {
-                            _selectedSpecializations.remove(spec);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Specializations/Dispatch Types',
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  child: Column(
+                    children: _dispatchTypes.map((spec) {
+                      final selected = _selectedSpecializations.contains(spec);
+                      return CheckboxListTile(
+                        value: selected,
+                        title: Text(spec),
+                        onChanged: (checked) {
+                          setState(() {
+                            if (checked == true) {
+                              _selectedSpecializations.add(spec);
+                            } else {
+                              _selectedSpecializations.remove(spec);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: _saving ? null : () => _saveIncident(),
-                    icon: const Icon(Icons.save),
-                    label: const Text('Save Incident'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+              // Save button
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                ],
+                  child: InkWell(
+                    onTap: _saving ? null : () => _saveIncident(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.save, color: Colors.blue, size: 16),
+                        SizedBox(width: 8),
+                        Text("Save ", style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text("Incident", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -978,6 +1091,13 @@ class _ConnectedReportsTableState extends State<ConnectedReportsTable> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool showStatus = screenWidth >= 1200;
+    final bool showLocation = screenWidth >= 1000;
+    final bool showDate = screenWidth >= 800;
+    final bool showType = screenWidth >= 600;
+    final bool showDescription = screenWidth >= 400;
+
     int totalPages = (_filteredReports.length / _rowsPerPage).ceil();
     int start = _currentPage * _rowsPerPage;
     int end = (_currentPage + 1) * _rowsPerPage;
@@ -1004,29 +1124,31 @@ class _ConnectedReportsTableState extends State<ConnectedReportsTable> {
               },
             ),
             const SizedBox(width: 24),
-            const Text('Sort by: '),
-            DropdownButton<String>(
-              value: _sortField == 'reported_at' ? 'timestamp' : _sortField,
-              items: [
-                DropdownMenuItem(value: 'timestamp', child: Text('Date')),
-                DropdownMenuItem(value: 'location', child: Text('Location')),
-              ],
-              onChanged: (v) {
-                setState(() {
-                  _sortField = v;
-                  _applyFilters();
-                });
-              },
-            ),
-            IconButton(
-              icon: Icon(_isAscending ? Icons.arrow_upward : Icons.arrow_downward),
-              onPressed: () {
-                setState(() {
-                  _isAscending = !_isAscending;
-                  _applyFilters();
-                });
-              },
-            ),
+            if (showDate) ...[
+              const Text('Sort by: '),
+              DropdownButton<String>(
+                value: _sortField == 'reported_at' ? 'timestamp' : _sortField,
+                items: [
+                  DropdownMenuItem(value: 'timestamp', child: Text('Date')),
+                  if (showLocation) DropdownMenuItem(value: 'location', child: Text('Location')),
+                ],
+                onChanged: (v) {
+                  setState(() {
+                    _sortField = v;
+                    _applyFilters();
+                  });
+                },
+              ),
+              IconButton(
+                icon: Icon(_isAscending ? Icons.arrow_upward : Icons.arrow_downward),
+                onPressed: () {
+                  setState(() {
+                    _isAscending = !_isAscending;
+                    _applyFilters();
+                  });
+                },
+              ),
+            ],
           ],
         ),
         const SizedBox(height: 8),
@@ -1054,11 +1176,11 @@ class _ConnectedReportsTableState extends State<ConnectedReportsTable> {
                         widget.onSelectionChanged(_selectedIds);
                       });
                     }),
-                    Expanded(flex: 2, child: Text('Location', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
-                    Expanded(flex: 2, child: Text('Incident Type', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
-                    Expanded(flex: 3, child: Text('Description', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
-                    Expanded(flex: 2, child: Text('Status', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
-                    Expanded(flex: 2, child: Text('Date', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                    if (showLocation) Expanded(flex: 2, child: Text('Location', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                    if (showType) Expanded(flex: 2, child: Text('Incident Type', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                    if (showDescription) Expanded(flex: 3, child: Text('Description', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                    if (showStatus) Expanded(flex: 2, child: Text('Status', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
+                    if (showDate) Expanded(flex: 2, child: Text('Date', style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold))),
                   ],
                 ),
               ),
@@ -1095,11 +1217,11 @@ class _ConnectedReportsTableState extends State<ConnectedReportsTable> {
                             });
                           },
                         ),
-                        Expanded(flex: 2, child: Text(r['location'] ?? '')),
-                        Expanded(flex: 2, child: Text(_getIncidentTypeName(r['incident_type']))),
-                        Expanded(flex: 3, child: Text(r['description'] ?? '', maxLines: 2, overflow: TextOverflow.ellipsis)),
-                        Expanded(flex: 2, child: Text(r['status'] ?? '')),
-                        Expanded(
+                        if (showLocation) Expanded(flex: 2, child: Text(r['location'] ?? '')),
+                        if (showType) Expanded(flex: 2, child: Text(_getIncidentTypeName(r['incident_type']))),
+                        if (showDescription) Expanded(flex: 3, child: Text(r['description'] ?? '', maxLines: 2, overflow: TextOverflow.ellipsis)),
+                        if (showStatus) Expanded(flex: 2, child: Text(r['status'] ?? '')),
+                        if (showDate) Expanded(
                           flex: 2,
                           child: Text(
                             r['timestamp'] != null
@@ -1126,7 +1248,7 @@ class _ConnectedReportsTableState extends State<ConnectedReportsTable> {
                             : null,
                         icon: const Icon(Icons.arrow_back),
                       ),
-                      Text('Page  a{_currentPage + 1} of $totalPages'),
+                      Text('Page ${_currentPage + 1} of $totalPages'),
                       IconButton(
                         onPressed: _currentPage < totalPages - 1
                             ? () => setState(() => _currentPage++)
