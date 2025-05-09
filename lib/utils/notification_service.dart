@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class NotificationService {
   /// Sends a status update notification to the user who created the report.
@@ -6,27 +6,22 @@ class NotificationService {
     required String userId,
     required String reportId,
     required String newStatus,
+    String? location,
+    String? incidentType,
   }) async {
-    // 1. Fetch the user's FCM token
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
-    final fcmToken = userDoc.data()?['fcm_token'];
-    if (fcmToken == null) {
-      print('No FCM token for user $userId');
-      return;
+    // Call the Cloud Function with userId (not fcmToken)
+    final callable = FirebaseFunctions.instance.httpsCallable('sendReportStatusNotification');
+    try {
+      final result = await callable.call({
+        'userId': userId,
+        'reportId': reportId,
+        'newStatus': newStatus,
+        'location': location ?? '',
+        'incidentType': incidentType ?? '',
+      });
+      print('Notification sent: [32m${result.data}[0m');
+    } catch (e) {
+      print('Error sending notification: $e');
     }
-
-    // 2. Build the notification payload
-    final notification = {
-      'title': 'Report Status Updated',
-      'body': 'Your report ($reportId) status is now: $newStatus',
-    };
-    final data = {
-      'type': 'report_status_update',
-      'report_id': reportId,
-      'new_status': newStatus,
-    };
-
-    // 3. Placeholder for actual FCM send (should be done via backend/Cloud Function)
-    print('Would send notification to $fcmToken: $notification, $data');
   }
 } 

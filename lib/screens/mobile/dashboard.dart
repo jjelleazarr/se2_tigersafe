@@ -10,9 +10,80 @@ import 'package:se2_tigersafe/guides/emergency_guide.dart';
 import 'package:se2_tigersafe/guides/fire_safety_guide.dart';
 import 'package:se2_tigersafe/guides/mental_health_guide.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  String? _specialization;
+  bool? _isERTMember;
+  late Future<List<Map<String, dynamic>>> _dispatchesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkERTMember();
+  }
+
+  Future<void> _checkERTMember() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+    final snap = await FirebaseFirestore.instance
+        .collection('ert_members')
+        .where('user_id', isEqualTo: userId)
+        .limit(1)
+        .get();
+    if (snap.docs.isNotEmpty) {
+      final spec = snap.docs.first['specialization'] as String?;
+      setState(() {
+        _isERTMember = true;
+        _specialization = spec;
+        _dispatchesFuture = _getRelevantDispatches(spec ?? '');
+      });
+    } else {
+      setState(() {
+        _isERTMember = false;
+      });
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _getRelevantDispatches(String specialization) async {
+    final Map<String, List<String>> specializationToDispatchFields = {
+      'medical': ['medical_team', 'ambulance', 'stretcher'],
+      'security': ['security'],
+      'others': ['hazard_team'],
+    };
+    final fields = specializationToDispatchFields[specialization] ?? [];
+    if (fields.isEmpty) return [];
+    final snap = await FirebaseFirestore.instance.collection('dispatches').get();
+    final relevant = snap.docs.where((doc) {
+      final data = doc.data();
+      return fields.any((field) => data[field] == true);
+    }).map((doc) => doc.data()).toList();
+    return relevant;
+  }
+
+  Stream<List<Map<String, dynamic>>> _getRelevantDispatchesStream(String specialization) {
+    final Map<String, List<String>> specializationToDispatchFields = {
+      'medical': ['medical_team', 'ambulance', 'stretcher'],
+      'security': ['security'],
+      'others': ['hazard_team'],
+    };
+    final fields = specializationToDispatchFields[specialization] ?? [];
+    if (fields.isEmpty) return Stream.value([]);
+    return FirebaseFirestore.instance.collection('dispatches').snapshots().map((snap) {
+      return snap.docs.where((doc) {
+        final data = doc.data();
+        return fields.any((field) => data[field] == true);
+      }).map((doc) => doc.data()).toList();
+    });
+  }
 
   void _setScreen(BuildContext context, String identifier) {
     if (identifier == 'filters') {
@@ -50,6 +121,48 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (_isERTMember == null) {
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_isERTMember == true) {
+      // ERT Dashboard
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('${_specialization?.substring(0, 1).toUpperCase()}${_specialization?.substring(1) ?? ''} Personnel'),
+          backgroundColor: Colors.black,
+        ),
+        body: StreamBuilder<List<Map<String, dynamic>>>(
+          stream: _getRelevantDispatchesStream(_specialization ?? ''),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+            final dispatches = snapshot.data!;
+            if (dispatches.isEmpty) {
+              return Center(child: Text('No reports found.'));
+            }
+            return ListView.builder(
+              itemCount: dispatches.length,
+              itemBuilder: (context, index) {
+                final dispatch = dispatches[index];
+                return ListTile(
+                  title: Text(dispatch['location'] ?? 'Unknown Location'),
+                  subtitle: Text(dispatch['description'] ?? ''),
+                  trailing: Text(dispatch['incident_type'] ?? ''),
+                  onTap: () {
+                    // Show details, allow to accept/mark "On the way"
+                  },
+                );
+              },
+            );
+          },
+        ),
+      );
+    } else {
+      // Stakeholder Dashboard (existing logic)
+      return _buildStakeholderDashboard(context);
+    }
+  }
+
+  Widget _buildStakeholderDashboard(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final double containerWidth = _getResponsiveWidth(screenWidth);
     final double reportingCardHeight = _getReportingCardHeight(screenWidth);

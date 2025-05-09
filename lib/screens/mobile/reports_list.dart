@@ -70,6 +70,7 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
                     final report = reports[index];
                     return _reportItem(
                       report['type'] ?? 'Report',
+                      report['description'] ?? '',
                       report['status'] ?? 'Unknown',
                       _statusColor(report['status'] ?? ''),
                     );
@@ -85,7 +86,7 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
   }
 
   // Report List Item
-  Widget _reportItem(String title, String status, Color statusColor) {
+  Widget _reportItem(String title, String description, String status, Color statusColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
       decoration: const BoxDecoration(
@@ -95,10 +96,25 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
           Row(
             children: [
