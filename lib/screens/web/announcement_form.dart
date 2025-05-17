@@ -37,6 +37,46 @@ class _AnnouncementFormScreenState extends State<AnnouncementFormScreen> {
   bool get _isEdit => widget.initial != null;
   bool _saving = false;
 
+  static const Map<String, List<String>> roleMappings = {
+    'Public': ['public'],
+    'Stakeholder': ['stakeholder'],
+    'Command Center': ['command_center_operator', 'command_center_admin'],
+    'Emergency Response Team': ['emergency_response_team'],
+  };
+
+  List<String> get _selectedFriendlyRoles {
+    // Map selected role values back to friendly labels
+    return roleMappings.entries
+        .where((e) => e.value.every((v) => _selectedRoles.contains(v)) && e.value.length == _selectedRoles.length)
+        .map((e) => e.key)
+        .toList();
+  }
+
+  void _handleRoleTap(String friendlyLabel) {
+    final values = roleMappings[friendlyLabel]!;
+    setState(() {
+      if (friendlyLabel == 'Public') {
+        if (_selectedRoles.contains('public')) {
+          _selectedRoles.clear();
+        } else {
+          _selectedRoles
+            ..clear()
+            ..addAll(values);
+        }
+      } else {
+        if (_selectedRoles.contains('public')) {
+          _selectedRoles.clear();
+        }
+        if (values.every((v) => _selectedRoles.contains(v))) {
+          _selectedRoles.removeWhere((v) => values.contains(v));
+        } else {
+          _selectedRoles.addAll(values);
+        }
+        // If all roles are deselected, keep empty
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -79,14 +119,6 @@ class _AnnouncementFormScreenState extends State<AnnouncementFormScreen> {
 
     final url = await AnnouncementController().uploadAttachment(bytes, picked.name);
     if (mounted) setState(() => _attachmentUrl = url);
-  }
-
-  void _toggleRole(String role) {
-    setState(() {
-      _selectedRoles.contains(role)
-          ? _selectedRoles.remove(role)
-          : _selectedRoles.add(role);
-    });
   }
 
   Future<void> _handleSubmit() async {
@@ -278,14 +310,23 @@ class _AnnouncementFormScreenState extends State<AnnouncementFormScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: _allRoles.map((role) {
-                      final selected = _selectedRoles.contains(role);
+                    children: roleMappings.keys.map((friendlyLabel) {
+                      final values = roleMappings[friendlyLabel]!;
+                      final isPublic = friendlyLabel == 'Public';
+                      final publicSelected = _selectedRoles.contains('public');
+                      final selected = isPublic
+                          ? publicSelected
+                          : values.every((v) => _selectedRoles.contains(v));
+                      final darken = publicSelected && !isPublic;
                       return FilterChip(
-                        label: Text(role),
+                        label: Text(friendlyLabel),
                         selected: selected,
-                        selectedColor: Color(0xFFFEC00F).withOpacity(0.2),
+                        selectedColor: darken ? Colors.grey[400] : Color(0xFFFEC00F).withOpacity(0.2),
                         checkmarkColor: Colors.black,
-                        onSelected: (_) => _toggleRole(role),
+                        backgroundColor: darken ? Colors.grey[400] : null,
+                        onSelected: (val) => _handleRoleTap(friendlyLabel),
+                        disabledColor: Colors.grey[400],
+                        showCheckmark: selected,
                       );
                     }).toList(),
                   ),

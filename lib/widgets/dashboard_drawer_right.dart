@@ -16,6 +16,7 @@ class DashboardDrawerRight extends StatelessWidget {
     return snap.docs
         .where((doc) {
           final scope = List<String>.from(doc['visibility_scope'] ?? []);
+          if (scope.contains('public')) return true;
           return userRoles.any((role) => scope.contains(role));
         })
         .map((doc) => doc.data())

@@ -84,7 +84,7 @@ class DashboardDrawerLeft extends StatelessWidget {
               ),
             ),
             onTap: () {
-              onSelectScreen('account');
+              Navigator.pushNamed(context, '/edit_profile');
             },
           ),
           ListTile(

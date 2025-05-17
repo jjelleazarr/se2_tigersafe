@@ -8,6 +8,7 @@ import 'package:se2_tigersafe/screens/web/report_logging.dart';
 import 'package:se2_tigersafe/screens/web/report_readonly.dart';
 import 'package:intl/intl.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class ReportLoggingDashboardScreen extends StatefulWidget {
   const ReportLoggingDashboardScreen({super.key});
@@ -557,42 +558,8 @@ class _ReportLoggingDashboardScreenState extends State<ReportLoggingDashboardScr
                                       runSpacing: 12,
                                       children: _selectedIncident!.attachments.map((a) {
                                         final url = a['url'] ?? '';
-                                        final isImage = url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png');
-                                        final isPdf = url.endsWith('.pdf');
-                                        if (isImage) {
-                                          return ClipRRect(
-                                            borderRadius: BorderRadius.circular(8),
-                                            child: Image.network(url, width: 120, height: 120, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image)),
-                                          );
-                                        } else if (isPdf) {
-                                          return InkWell(
-                                            onTap: () => launchUrl(Uri.parse(url)),
-                                            child: Container(
-                                              width: 120,
-                                              height: 120,
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey[200],
-                                                borderRadius: BorderRadius.circular(8),
-                                                border: Border.all(color: Colors.black, width: 1),
-                                              ),
-                                              child: const Center(child: Icon(Icons.picture_as_pdf, size: 48, color: Colors.red)),
-                                            ),
-                                          );
-                                        } else {
-                                          return InkWell(
-                                            onTap: () => launchUrl(Uri.parse(url)),
-                                            child: Container(
-                                              width: 120,
-                                              height: 120,
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey[300],
-                                                borderRadius: BorderRadius.circular(8),
-                                                border: Border.all(color: Colors.black, width: 1),
-                                              ),
-                                              child: const Center(child: Icon(Icons.attach_file, size: 40)),
-                                            ),
-                                          );
-                                        }
+                                        final type = (a['type'] ?? '').toLowerCase();
+                                        return AttachmentPreview(url: url, type: type);
                                       }).toList(),
                                     ),
                                   ],
@@ -620,7 +587,7 @@ class _ReportLoggingDashboardScreenState extends State<ReportLoggingDashboardScr
                                       spacing: 8,
                                       runSpacing: 8,
                                       children: _selectedIncident!.specializations.map((spec) => Chip(
-                                        label: Text(spec),
+                                        label: Text(formatTypeName(spec)),
                                         backgroundColor: Colors.blue[100],
                                       )).toList(),
                                     ),
@@ -900,5 +867,94 @@ Future<List<_ERTMemberDisplayInfo>> _fetchERTMembers(List<String> memberIds) asy
     ));
   }
   return result;
+}
+
+class AttachmentPreview extends StatelessWidget {
+  final String url;
+  final String type;
+  const AttachmentPreview({super.key, required this.url, required this.type});
+
+  @override
+  Widget build(BuildContext context) {
+    final isImg = ['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(type) ||
+        url.toLowerCase().endsWith('.png') ||
+        url.toLowerCase().endsWith('.jpg') ||
+        url.toLowerCase().endsWith('.jpeg') ||
+        url.toLowerCase().endsWith('.gif') ||
+        url.toLowerCase().endsWith('.webp');
+    final isPdf = type == 'pdf' || url.toLowerCase().endsWith('.pdf');
+
+    if (isImg) {
+      if (url.startsWith('gs://')) {
+        return FutureBuilder<String>(
+          future: FirebaseStorage.instance.refFromURL(url).getDownloadURL(),
+          builder: (context, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
+              return const SizedBox(width: 120, height: 120, child: Center(child: CircularProgressIndicator()));
+            }
+            if (!snap.hasData) {
+              return const SizedBox(width: 120, height: 120, child: Center(child: Icon(Icons.broken_image)));
+            }
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                snap.data!,
+                width: 120,
+                height: 120,
+                fit: BoxFit.cover,
+                errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
+              ),
+            );
+          },
+        );
+      }
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          url,
+          width: 120,
+          height: 120,
+          fit: BoxFit.cover,
+          errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
+        ),
+      );
+    }
+    if (isPdf) {
+      return InkWell(
+        onTap: () => launchUrl(Uri.parse(url)),
+        child: Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.black, width: 1),
+          ),
+          child: const Center(child: Icon(Icons.picture_as_pdf, size: 48, color: Colors.red)),
+        ),
+      );
+    }
+    // Other file types
+    return InkWell(
+      onTap: () => launchUrl(Uri.parse(url)),
+      child: Container(
+        width: 120,
+        height: 120,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.black, width: 1),
+        ),
+        child: const Center(child: Icon(Icons.attach_file, size: 40)),
+      ),
+    );
+  }
+}
+
+String formatTypeName(String type) {
+  return type
+      .split('_')
+      .map((w) => w.isNotEmpty ? w[0].toUpperCase() + w.substring(1) : '')
+      .join(' ');
 } 
 

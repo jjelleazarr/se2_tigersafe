@@ -40,9 +40,7 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (ctx) => const DashboardScreen()),
-            );
+            Navigator.pushReplacementNamed(context, '/dashboard');
           },
         ),
         title: const Text(

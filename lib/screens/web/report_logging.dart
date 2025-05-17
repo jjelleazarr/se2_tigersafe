@@ -516,11 +516,69 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Wrap(
                     spacing: 8,
-                    children: _attachments.map((a) => a['url'] != null
-                        ? InkWell(
-                            onTap: () => launchUrl(Uri.parse(a['url'])),
-                            child: Chip(label: Text(a['url'].toString().split('/').last)))
-                        : const SizedBox.shrink()).toList(),
+                    runSpacing: 8,
+                    children: _attachments.map((a) {
+                      final url = a['url'] ?? '';
+                      final type = (a['type'] ?? '').toLowerCase();
+                      final fileName = Uri.decodeComponent(Uri.parse(url).pathSegments.last);
+                      final isImg = ['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(type) ||
+                          url.toLowerCase().endsWith('.png') ||
+                          url.toLowerCase().endsWith('.jpg') ||
+                          url.toLowerCase().endsWith('.jpeg') ||
+                          url.toLowerCase().endsWith('.gif') ||
+                          url.toLowerCase().endsWith('.webp');
+                      final isPdf = type == 'pdf' || url.toLowerCase().endsWith('.pdf');
+                      if (isImg) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            url,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
+                          ),
+                        );
+                      } else if (isPdf) {
+                        return InkWell(
+                          onTap: () => launchUrl(Uri.parse(url)),
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.black, width: 1),
+                            ),
+                            child: const Center(child: Icon(Icons.picture_as_pdf, size: 32, color: Colors.red)),
+                          ),
+                        );
+                      } else {
+                        return Container(
+                          width: 160,
+                          height: 40,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.black, width: 1),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.attach_file, size: 20),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  fileName,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    }).toList(),
                   ),
                 ),
               const SizedBox(height: 12),
@@ -674,7 +732,7 @@ class _ReportLoggingScreenState extends State<ReportLoggingScreen> {
                       final selected = _selectedSpecializations.contains(spec);
                       return CheckboxListTile(
                         value: selected,
-                        title: Text(spec),
+                        title: Text(formatTypeName(spec)),
                         onChanged: (checked) {
                           setState(() {
                             if (checked == true) {
@@ -1265,4 +1323,11 @@ class _ConnectedReportsTableState extends State<ConnectedReportsTable> {
       ],
     );
   }
+}
+
+String formatTypeName(String type) {
+  return type
+      .split('_')
+      .map((w) => w.isNotEmpty ? w[0].toUpperCase() + w.substring(1) : '')
+      .join(' ');
 }

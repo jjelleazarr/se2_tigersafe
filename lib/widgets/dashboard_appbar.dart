@@ -14,6 +14,17 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       backgroundColor: Colors.black,
+      actions: [
+        Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.notifications, color: Color(0xFFFEC00F)),
+            tooltip: 'Announcements',
+            onPressed: () {
+              Scaffold.of(context).openEndDrawer();
+            },
+          ),
+        ),
+      ],
     );
   }
 
