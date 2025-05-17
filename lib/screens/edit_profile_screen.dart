@@ -5,9 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:typed_data';
 import 'dart:io';
-// For web image picking
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
 import 'package:image_picker/image_picker.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -78,38 +75,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Future<Uint8List?> pickProfileImage() async {
+    if (kIsWeb) {
+      // Web-specific logic (moved to a separate file to avoid import errors)
+      return await pickImageWeb();
+    } else {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: ImageSource.gallery);
+      if (picked != null) {
+        return await picked.readAsBytes();
+      }
+      return null;
+    }
+  }
+
   Future<void> _pickAndUploadImage() async {
     setState(() { _uploadingImage = true; });
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
       String? downloadUrl;
-      if (kIsWeb) {
-        // Web: use html FileUploadInputElement
-        final uploadInput = html.FileUploadInputElement();
-        uploadInput.accept = 'image/*';
-        uploadInput.click();
-        await uploadInput.onChange.first;
-        final file = uploadInput.files?.first;
-        if (file != null) {
-          final reader = html.FileReader();
-          reader.readAsArrayBuffer(file);
-          await reader.onLoad.first;
-          final data = reader.result as Uint8List;
-          final ref = FirebaseStorage.instance.ref().child('profile_images/${user.uid}.jpg');
-          final uploadTask = await ref.putData(data, SettableMetadata(contentType: file.type));
-          downloadUrl = await uploadTask.ref.getDownloadURL();
-        }
-      } else {
-        // Mobile: use image_picker
-        final picker = ImagePicker();
-        final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-        if (pickedFile != null) {
-          final file = File(pickedFile.path);
-          final ref = FirebaseStorage.instance.ref().child('profile_images/${user.uid}.jpg');
-          final uploadTask = await ref.putFile(file);
-          downloadUrl = await uploadTask.ref.getDownloadURL();
-        }
+      final imageBytes = await pickProfileImage();
+      if (imageBytes != null) {
+        final ref = FirebaseStorage.instance.ref().child('profile_images/${user.uid}.jpg');
+        final uploadTask = await ref.putData(imageBytes);
+        downloadUrl = await uploadTask.ref.getDownloadURL();
       }
       if (downloadUrl != null) {
         await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
@@ -219,7 +209,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildMobileLayout(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
       child: Form(
         key: _formKey,
@@ -360,5 +350,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       ),
     );
+  }
+
+  Future<Uint8List?> pickImageWeb() async {
+    throw UnimplementedError('pickImageWeb is only available on web.');
   }
 } 
