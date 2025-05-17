@@ -39,8 +39,19 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
         backgroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pushReplacementNamed(context, '/dashboard');
+          onPressed: () async {
+            final user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+              final roles = List<String>.from(doc['roles'] ?? []);
+              if (roles.contains('emergency_response_team')) {
+                Navigator.pushReplacementNamed(context, '/ert_dashboard');
+              } else {
+                Navigator.pushReplacementNamed(context, '/dashboard');
+              }
+            } else {
+              Navigator.pushReplacementNamed(context, '/dashboard');
+            }
           },
         ),
         title: const Text(
