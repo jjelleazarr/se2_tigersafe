@@ -35,6 +35,7 @@ import 'package:se2_tigersafe/screens/web/priority_verification.dart';
 import 'package:se2_tigersafe/screens/web/priority_verification_details.dart';
 import 'package:se2_tigersafe/screens/web/priority_verification_action.dart';
 import 'package:se2_tigersafe/screens/web/report_logging.dart';
+import 'package:se2_tigersafe/screens/edit_profile_screen.dart';
 
 Future<bool> isUserAuthorized(String uid, List<String> allowedRoles) async {
   final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
@@ -397,6 +398,16 @@ class _MyAppState extends State<MyApp> {
                     : Scaffold(body: Center(child: CircularProgressIndicator())),
               ),
             );
+          case '/edit_profile':
+            if (user == null) {
+              return MaterialPageRoute(
+                builder: (_) => kIsWeb ? WebLoginScreen() : MobileLoginScreen(),
+              );
+            } else {
+              return MaterialPageRoute(
+                builder: (_) => EditProfileScreen(),
+              );
+            }
         }
 
         // Verification screens (shared)
