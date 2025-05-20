@@ -49,8 +49,9 @@ class ERTMemberController {
 
   /// Update ERT Member Status
   Future<void> updateERTMemberStatus(String memberId, String newStatus) async {
-    if (newStatus != "Active" && newStatus != "On-Duty" && newStatus != "Off-Duty") {
-      print("Invalid status update. Use 'Active', 'On-Duty', or 'Off-Duty'.");
+    const allowedStatuses = ["Active", "Dispatched", "Arrived", "On-Duty", "Off-Duty"];
+    if (!allowedStatuses.contains(newStatus)) {
+      print("Invalid status update. Use one of: " + allowedStatuses.join(", "));
       return;
     }
     try {

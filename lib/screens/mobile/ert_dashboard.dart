@@ -116,10 +116,12 @@ class _ERTDashboardScreenState extends State<ERTDashboardScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // 📋 Scrollable Reports Section (now real-time)
+                    // 📋 Reports Section (now real-time)
                     Container(
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.black, width: 1.5),
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.white,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,108 +193,12 @@ class _ERTDashboardScreenState extends State<ERTDashboardScreen> {
                         ],
                       ),
                     ),
-
-                    const SizedBox(height: 20),
-
-                    // ☎️ Emergency
-                    _reportingButton(
-                      width: containerWidth,
-                      height: reportingCardHeight,
-                      icon: Icons.phone,
-                      iconColor: Colors.black,
-                      text: "Emergency",
-                      textColor: Colors.red,
-                      subText: "Reporting",
-                    ),
-
-                    // 📝 Incident
-                    _reportingButton(
-                      width: containerWidth,
-                      height: reportingCardHeight,
-                      icon: Icons.assignment,
-                      iconColor: Colors.black,
-                      text: "Incident",
-                      textColor: const Color(0xFFFEC00F),
-                      subText: "Reporting",
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const IncidentReportingScreen(),
-                          ),
-                        );
-                      },
-                    ),
                   ],
                 ),
               ),
             ),
           );
         }),
-      ),
-    );
-  }
-
-  Widget _reportingButton({
-    required double width,
-    required double height,
-    required IconData icon,
-    required Color iconColor,
-    required String text,
-    required Color textColor,
-    required String subText,
-    VoidCallback? onPressed,
-  }) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        height: height,
-        width: width,
-        margin: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.black, width: 1.5),
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 80,
-              height: double.infinity,
-              decoration: const BoxDecoration(
-                border: Border(right: BorderSide(color: Colors.black, width: 1.5)),
-              ),
-              child: Center(
-                child: Icon(icon, color: iconColor, size: 40),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      text,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                    ),
-                    Text(
-                      subText,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
