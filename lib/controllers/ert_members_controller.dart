@@ -73,4 +73,13 @@ class ERTMemberController {
       print('Error deleting ERT member: $e');
     }
   }
+
+  /// Stream All ERT Members (real-time updates)
+  Stream<List<ERTMemberModel>> streamAllERTMembers() {
+    return ertMembersRef.snapshots().map((snapshot) =>
+      snapshot.docs.map((doc) =>
+        ERTMemberModel.fromJson(doc.data() as Map<String, dynamic>, doc.id)
+      ).toList()
+    );
+  }
 }

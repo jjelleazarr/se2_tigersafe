@@ -34,8 +34,8 @@ class _ResponseTeamsScreenState extends State<ResponseTeamsScreen> with SingleTi
   }
 
   Widget _buildPersonnelTable(String specialization) {
-    return FutureBuilder<List<ERTMemberModel>>(
-      future: _controller.getAllERTMembers(),
+    return StreamBuilder<List<ERTMemberModel>>(
+      stream: _controller.streamAllERTMembers(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator());
         if (!snapshot.hasData || snapshot.data!.isEmpty) return Center(child: Text("No personnel available."));
