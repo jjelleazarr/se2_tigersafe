@@ -6,6 +6,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:typed_data';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import '../widgets/dashboard_appbar.dart';
+import '../widgets/dashboard_drawer_left.dart';
+import '../widgets/dashboard_drawer_right.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);
@@ -152,28 +155,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
     if (_error != null) {
       return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          title: Image.asset('assets/UST_LOGO_NO_TEXT.png', height: 40),
-          centerTitle: true,
-          backgroundColor: Colors.black,
-        ),
+        appBar: const DashboardAppBar(),
+        endDrawer: DashboardDrawerRight(onSelectScreen: (_) {}),
         body: Center(child: Text(_error!, style: const TextStyle(color: Colors.red))),
       );
     }
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Image.asset('assets/UST_LOGO_NO_TEXT.png', height: 40),
-        centerTitle: true,
-        backgroundColor: Colors.black,
-      ),
+      appBar: const DashboardAppBar(),
+      endDrawer: DashboardDrawerRight(onSelectScreen: (_) {}),
       body: kIsWeb ? _buildWebLayout(context) : _buildMobileLayout(context),
     );
   }
@@ -209,135 +198,204 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildMobileLayout(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            _buildProfileImage(context),
-            const SizedBox(height: 24),
-            _buildTextField('ID Number', initialValue: idNumber, onChanged: (v) => idNumber = v),
-            _buildTextField('Surname', initialValue: surname, onChanged: (v) => surname = v),
-            _buildTextField('First Name', initialValue: firstName, onChanged: (v) => firstName = v),
-            _buildTextField('Middle Name', initialValue: middleName, onChanged: (v) => middleName = v),
-            _buildTextField('Phone Number', initialValue: phoneNumber, onChanged: (v) => phoneNumber = v),
-            _buildTextField('Address', initialValue: address, onChanged: (v) => address = v),
-            _buildTextField('Role', readOnly: true, initialValue: role ?? ''),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: _saving ? null : _saveProfile,
-                child: _saving
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Save', style: TextStyle(fontSize: 20)),
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWebLayout(BuildContext context) {
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.all(40),
-        padding: const EdgeInsets.all(40),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28)),
-              const Divider(thickness: 2),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: IntrinsicHeight(
+              child: Column(
                 children: [
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      children: [
-                        _buildProfileImage(context),
-                      ],
+                  const SizedBox(height: 32),
+                  // Two-tone header
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Edit ',
+                            style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 28),
+                          ),
+                          TextSpan(
+                            text: 'Profile',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.left,
                     ),
                   ),
-                  const SizedBox(width: 40),
-                  Expanded(
-                    flex: 5,
+                  const SizedBox(height: 28),
+                  // Profile image with black border
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.black, width: 4),
+                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                    ),
+                    child: _buildProfileImage(context),
+                  ),
+                  const SizedBox(height: 24),
+                  Form(
+                    key: _formKey,
                     child: Column(
                       children: [
-                        Row(
-                          children: [
-                            Expanded(child: _buildTextField('ID Number', initialValue: idNumber, onChanged: (v) => idNumber = v)),
-                            const SizedBox(width: 24),
-                            Expanded(child: _buildTextField('Phone Number', initialValue: phoneNumber, onChanged: (v) => phoneNumber = v)),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Expanded(child: _buildTextField('Surname', initialValue: surname, onChanged: (v) => surname = v)),
-                            const SizedBox(width: 24),
-                            Expanded(child: _buildTextField('Address', initialValue: address, onChanged: (v) => address = v)),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Expanded(child: _buildTextField('First Name', initialValue: firstName, onChanged: (v) => firstName = v)),
-                            const SizedBox(width: 24),
-                            Expanded(child: _buildTextField('Role', readOnly: true, initialValue: role ?? '')),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Expanded(child: _buildTextField('Middle Name', initialValue: middleName, onChanged: (v) => middleName = v)),
-                            const SizedBox(width: 24),
-                            Expanded(child: Container()),
-                          ],
-                        ),
+                        _styledTextField('ID Number', initialValue: idNumber, onChanged: (v) => idNumber = v),
+                        _styledTextField('Surname', initialValue: surname, onChanged: (v) => surname = v),
+                        _styledTextField('First Name', initialValue: firstName, onChanged: (v) => firstName = v),
+                        _styledTextField('Middle Name', initialValue: middleName, onChanged: (v) => middleName = v),
+                        _styledTextField('Phone Number', initialValue: phoneNumber, onChanged: (v) => phoneNumber = v),
+                        _styledTextField('Address', initialValue: address, onChanged: (v) => address = v),
+                        _styledTextField('Role', readOnly: true, initialValue: role ?? ''),
                         const SizedBox(height: 32),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: SizedBox(
-                            width: 200,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              ),
-                              onPressed: _saving ? null : _saveProfile,
-                              child: _saving
-                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                  : const Text('Save', style: TextStyle(fontSize: 22)),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              foregroundColor: Color(0xFFFEC00F),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              side: const BorderSide(color: Colors.black, width: 2),
                             ),
+                            onPressed: _saving ? null : _saveProfile,
+                            child: _saving
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : const Text('Save Changes'),
                           ),
                         ),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildTextField(String label, {bool readOnly = false, String? initialValue, ValueChanged<String>? onChanged}) {
+  Widget _buildWebLayout(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(0),
+          child: Center(
+            child: Container(
+              margin: const EdgeInsets.all(40),
+              padding: const EdgeInsets.all(40),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 24, offset: Offset(0, 8))],
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minWidth: 320,
+                  maxWidth: 700,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Two-tone header
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Edit ',
+                              style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 32),
+                            ),
+                            TextSpan(
+                              text: 'Profile',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 32),
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.black, width: 4),
+                            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                          ),
+                          child: _buildProfileImage(context),
+                        ),
+                        const SizedBox(width: 48),
+                        Expanded(
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              children: [
+                                _styledTextField('ID Number', initialValue: idNumber, onChanged: (v) => idNumber = v),
+                                _styledTextField('Surname', initialValue: surname, onChanged: (v) => surname = v),
+                                _styledTextField('First Name', initialValue: firstName, onChanged: (v) => firstName = v),
+                                _styledTextField('Middle Name', initialValue: middleName, onChanged: (v) => middleName = v),
+                                _styledTextField('Phone Number', initialValue: phoneNumber, onChanged: (v) => phoneNumber = v),
+                                _styledTextField('Address', initialValue: address, onChanged: (v) => address = v),
+                                _styledTextField('Role', readOnly: true, initialValue: role ?? ''),
+                                const SizedBox(height: 32),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.black,
+                                      foregroundColor: Color(0xFFFEC00F),
+                                      padding: const EdgeInsets.symmetric(vertical: 18),
+                                      textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                      side: const BorderSide(color: Colors.black, width: 2),
+                                    ),
+                                    onPressed: _saving ? null : _saveProfile,
+                                    child: _saving
+                                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                        : const Text('Save Changes'),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Styled input field for both web and mobile
+  Widget _styledTextField(String label, {bool readOnly = false, String? initialValue, ValueChanged<String>? onChanged}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
@@ -346,7 +404,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
-          border: const UnderlineInputBorder(),
+          filled: true,
+          fillColor: Colors.grey[100],
+          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+          labelStyle: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.black, width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.black, width: 2),
+          ),
+          disabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.grey, width: 1),
+          ),
         ),
       ),
     );

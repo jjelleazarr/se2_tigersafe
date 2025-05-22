@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../models/announcements_collection.dart';
 import 'announcement_form.dart';
 import '../../widgets/dashboard_appbar.dart';
+import '../../widgets/dashboard_drawer_right.dart';
 
 class AnnouncementBoardScreen extends StatefulWidget {
   const AnnouncementBoardScreen({super.key});
@@ -167,14 +168,37 @@ class _AnnouncementBoardScreenState extends State<AnnouncementBoardScreen> {
 
   Widget _buildImage(String url) => Padding(
         padding: const EdgeInsets.only(top: 16, bottom: 8),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            url,
-            height: 220,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const Text('Image failed to load'),
+        child: GestureDetector(
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (_) => Dialog(
+                backgroundColor: Colors.transparent,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: InteractiveViewer(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        url,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Text('Image failed to load'),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              url,
+              height: 120,
+              width: 240,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const Text('Image failed to load'),
+            ),
           ),
         ),
       );
@@ -237,6 +261,9 @@ class _AnnouncementBoardScreenState extends State<AnnouncementBoardScreen> {
     }
 
     final data = _selectedDoc!.data();
+    final String? imageUrl = (data['attachments'] != null && (data['attachments'] as String).isNotEmpty)
+        ? data['attachments'] as String
+        : null;
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -690,6 +717,7 @@ class _AnnouncementBoardScreenState extends State<AnnouncementBoardScreen> {
 
     return Scaffold(
       appBar: const DashboardAppBar(),
+      endDrawer: DashboardDrawerRight(onSelectScreen: (_) {}),
       body: Row(
         children: [
           if (showLeftPane)

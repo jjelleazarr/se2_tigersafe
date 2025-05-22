@@ -3,6 +3,7 @@ import 'manage_accounts.dart';
 import 'stakeholder_verification.dart';
 import 'priority_verification.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
+import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 
 class AccountManagementScreen extends StatefulWidget {
   @override
@@ -25,6 +26,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> with 
       length: tabs.length,
       child: Scaffold(
         appBar: const DashboardAppBar(),
+        endDrawer: DashboardDrawerRight(onSelectScreen: (_) {}),
         body: Column(
           children: [
             const SizedBox(height: 16),

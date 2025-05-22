@@ -9,6 +9,7 @@ import 'package:se2_tigersafe/screens/web/report_readonly.dart';
 import 'package:intl/intl.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 
 class ReportLoggingDashboardScreen extends StatefulWidget {
   const ReportLoggingDashboardScreen({super.key});
@@ -397,6 +398,7 @@ class _ReportLoggingDashboardScreenState extends State<ReportLoggingDashboardScr
 
     return Scaffold(
       appBar: DashboardAppBar(),
+      endDrawer: DashboardDrawerRight(onSelectScreen: (_) {}),
       body: Row(
         children: [
           // Incidents Table

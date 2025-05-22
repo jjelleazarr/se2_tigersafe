@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:se2_tigersafe/screens/web/incident_report.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/dashboard_appbar.dart';
+import '../../widgets/dashboard_drawer_right.dart';
 
 class IncidentDashboardScreen extends StatefulWidget {
   const IncidentDashboardScreen({super.key});
@@ -104,8 +105,8 @@ class _IncidentDashboardScreenState extends State<IncidentDashboardScreen> {
     final bool showTime = screenWidth >= 600;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
       appBar: const DashboardAppBar(),
+      endDrawer: DashboardDrawerRight(onSelectScreen: (_) {}),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
         child: Column(

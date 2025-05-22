@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:se2_tigersafe/models/ert_members_collection.dart';
 import 'package:se2_tigersafe/controllers/ert_members_controller.dart';
 import 'package:se2_tigersafe/widgets/dashboard_appbar.dart';
+import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 
 class ResponseTeamsScreen extends StatefulWidget {
   @override
@@ -132,6 +133,7 @@ class _ResponseTeamsScreenState extends State<ResponseTeamsScreen> with SingleTi
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: DashboardAppBar(),
+      endDrawer: DashboardDrawerRight(onSelectScreen: (_) {}),
       body: Column(
         children: [
           const SizedBox(height: 16),

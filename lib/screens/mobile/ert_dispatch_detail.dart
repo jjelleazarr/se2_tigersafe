@@ -180,160 +180,383 @@ class _ERTDispatchDetailScreenState extends State<ERTDispatchDetailScreen> {
     final isResponder = userId != null && responders.contains(userId);
     final isDeclined = userId != null && declined.contains(userId);
     final isResolved = userId != null && resolved.contains(userId);
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('Dispatch Details'),
+        backgroundColor: Colors.black,
+        title: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: 'Dispatch Details',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24),
+              ),
+            ],
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Color(0xFFFEC00F)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Incident type tag
-            if (dispatch['incident_type'] != null)
-              Align(
-                alignment: Alignment.centerRight,
-                child: Chip(
-                  label: Text(
-                    (dispatch['incident_type'] as String).split(' ').join('\n'),
-                    style: const TextStyle(fontSize: 12),
-                    textAlign: TextAlign.center,
-                  ),
-                  backgroundColor: Colors.red,
-                  labelPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-            const SizedBox(height: 12),
-            // Location
-            Text('Location:', style: Theme.of(context).textTheme.titleMedium),
-            Text(dispatch['location'] ?? '', style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 16),
-            // Description
-            Text('Description of the Incident:', style: Theme.of(context).textTheme.titleMedium),
-            Text(dispatch['description'] ?? '', style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 16),
-            // Status
-            if (dispatch['status'] != null)
-              Text('Status: ${dispatch['status']}', style: const TextStyle(fontWeight: FontWeight.bold)),
-            // Timestamp
-            if (dispatch['timestamp'] != null)
-              Text('Dispatched At: ${formatTimestamp(dispatch['timestamp'])}'),
-            const SizedBox(height: 16),
-            // Attachments
-            if (attachments.isNotEmpty) ...[
-              Text('Media Attachments:', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: attachments.map((url) {
-                  final isImage = url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png');
-                  final isPdf = url.endsWith('.pdf');
-                  if (isImage) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(url, width: 120, height: 120, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image)),
-                    );
-                  } else if (isPdf) {
-                    return InkWell(
-                      onTap: () => launchUrl(Uri.parse(url)),
-                      child: Container(
-                        width: 120,
-                        height: 120,
-                        color: Colors.grey[200],
-                        child: const Center(child: Icon(Icons.picture_as_pdf, size: 48, color: Colors.red)),
+              padding: const EdgeInsets.all(20),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 24),
+                    // Status Card
+                    Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: Colors.black, width: 1),
                       ),
-                    );
-                  } else {
-                    return InkWell(
-                      onTap: () => launchUrl(Uri.parse(url)),
-                      child: Container(
-                        width: 120,
-                        height: 120,
-                        color: Colors.grey[300],
-                        child: const Center(child: Icon(Icons.attach_file, size: 40)),
-                      ),
-                    );
-                  }
-                }).toList(),
-              ),
-            ],
-            const SizedBox(height: 24),
-            if (!_resolved) ...[
-              if (isResponder) ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.black,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Current Status',
+                                    style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 18),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: _getStatusColor(dispatch['status'] ?? ''),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      dispatch['status'] ?? 'Unknown',
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Dispatched At: ${formatTimestamp(dispatch['timestamp'])}',
+                              style: const TextStyle(color: Colors.black54, fontSize: 14),
+                            ),
+                          ],
                         ),
-                        onPressed: _loading ? null : _showUpdateStatusDialog,
-                        child: const Text("UPDATE STATUS"),
                       ),
                     ),
+                    const SizedBox(height: 20),
+
+                    // Incident Details Card
+                    Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: Colors.black, width: 1),
+                      ),
+                      color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Incident Type Header
+                            if (dispatch['incident_type'] != null)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  dispatch['incident_type'],
+                                  style: const TextStyle(
+                                    color: Color(0xFFFEC00F),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: 20),
+
+                            // Location Section
+                            _buildInfoSection(
+                              'Location',
+                              dispatch['location'] ?? '',
+                              Icons.location_on,
+                              Colors.red,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Description Section
+                            _buildInfoSection(
+                              'Description',
+                              dispatch['description'] ?? '',
+                              Icons.description,
+                              Colors.blue,
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Attachments Section
+                            if (attachments.isNotEmpty) ...[
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  'Media Attachments',
+                                  style: TextStyle(
+                                    color: Color(0xFFFEC00F),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                children: attachments.map((url) {
+                                  final isImage = url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png');
+                                  final isPdf = url.endsWith('.pdf');
+                                  if (isImage) {
+                                    return ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        url,
+                                        width: 140,
+                                        height: 140,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (c, e, s) => Container(
+                                          width: 140,
+                                          height: 140,
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[200],
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                                        ),
+                                      ),
+                                    );
+                                  } else if (isPdf) {
+                                    return InkWell(
+                                      onTap: () => launchUrl(Uri.parse(url)),
+                                      child: Container(
+                                        width: 140,
+                                        height: 140,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[200],
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.grey[300]!),
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(Icons.picture_as_pdf, size: 48, color: Colors.red),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'PDF Document',
+                                              style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    return InkWell(
+                                      onTap: () => launchUrl(Uri.parse(url)),
+                                      child: Container(
+                                        width: 140,
+                                        height: 140,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[200],
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.grey[300]!),
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(Icons.attach_file, size: 40, color: Colors.blue),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Attachment',
+                                              style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }).toList(),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Action Buttons
+                    if (!_resolved) ...[
+                      if (isResponder) ...[
+                        _buildActionButton(
+                          "UPDATE STATUS",
+                          Colors.black,
+                          _loading ? null : _showUpdateStatusDialog,
+                          Icons.update,
+                        ),
+                      ] else if (!isDeclined && !isResolved) ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildActionButton(
+                                "I'M ON THE WAY",
+                                Colors.black,
+                                _loading ? null : () async => await _updateERTStatus('Dispatched'),
+                                Icons.directions_run,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildActionButton(
+                                "Unable to Respond",
+                                Colors.red,
+                                _loading ? null : () async => await _updateERTStatus('Unable to Respond'),
+                                Icons.cancel,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ] else ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: Center(
+                            child: Text(
+                              isDeclined
+                                  ? 'You have declined this dispatch.'
+                                  : 'You have resolved this dispatch.',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[700],
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ]
+                    ],
                   ],
                 ),
-              ] else if (!isDeclined && !isResolved) ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                        ),
-                        onPressed: _loading
-                            ? null
-                            : () async {
-                                await _updateERTStatus('Dispatched');
-                              },
-                        child: const Text("I'M ON THE WAY"),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        onPressed: _loading
-                            ? null
-                            : () async {
-                                await _updateERTStatus('Unable to Respond');
-                              },
-                        child: const Text("Unable to Respond"),
-                      ),
-                    ),
-                ],
               ),
-              ] else ...[
-                Center(
-                  child: Text(
-                    isDeclined
-                        ? 'You have declined this dispatch.'
-                        : 'You have resolved this dispatch.',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                  ),
-                ),
-              ]
-            ]
+            ),
+    );
+  }
+
+  Widget _buildInfoSection(String title, String content, IconData icon, Color iconColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: iconColor, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.black87,
+              ),
+            ),
           ],
         ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: Text(
+            content,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton(String text, Color color, VoidCallback? onPressed, IconData icon) {
+    // Determine icon color based on button text
+    Color iconColor;
+    if (text == "I'M ON THE WAY") {
+      iconColor = Colors.blue;
+    } else if (text == "Unable to Respond") {
+      iconColor = Colors.white;
+    } else {
+      iconColor = color == Colors.red ? Colors.white : Color(0xFFFEC00F);
+    }
+
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: color == Colors.red ? Colors.white : Color(0xFFFEC00F),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: color, width: 1.5),
+        ),
+      ),
+      onPressed: onPressed,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 20, color: iconColor),
+          const SizedBox(width: 8),
+          Text(text),
+        ],
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'resolved':
+        return Colors.green;
+      case 'dropped':
+        return Colors.red;
+      case 'pending':
+        return Colors.orange;
+      case 'dispatched':
+        return Colors.blue;
+      case 'arrived':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
   }
 } 

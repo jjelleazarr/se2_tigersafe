@@ -68,28 +68,38 @@ class _ERTDashboardScreenState extends State<ERTDashboardScreen> {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return Stream.value([]);
 
-    final Map<String, List<String>> specializationToDispatchFields = {
-      'medical': ['medical_team', 'ambulance', 'stretcher'],
-      'security': ['security'],
-      'others': ['hazard_team'],
-    };
-    final fields = specializationToDispatchFields[specialization] ?? [];
-    if (fields.isEmpty) return Stream.value([]);
-
+    // First check if user has any active dispatches (where they are a responder)
     return FirebaseFirestore.instance
         .collection('dispatches')
+        .where('responders', arrayContains: userId)
+        .where('status', whereIn: ['Dispatched', 'Arrived'])
         .snapshots()
-        .map((snap) {
-          return snap.docs.where((doc) {
+        .asyncMap((activeDispatches) async {
+          // If user has active dispatches, only show those
+          if (activeDispatches.docs.isNotEmpty) {
+            return activeDispatches.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList();
+          }
+
+          // If no active dispatches, show available dispatches based on specialization
+          final Map<String, List<String>> specializationToDispatchFields = {
+            'medical': ['medical_team', 'ambulance', 'stretcher'],
+            'security': ['security'],
+            'others': ['hazard_team'],
+          };
+          final fields = specializationToDispatchFields[specialization] ?? [];
+          if (fields.isEmpty) return [];
+
+          final allDispatches = await FirebaseFirestore.instance
+              .collection('dispatches')
+              .get();
+
+          return allDispatches.docs.where((doc) {
             final data = doc.data();
             final responders = List<String>.from(data['responders'] ?? []);
             final declined = List<String>.from(data['declined'] ?? []);
             final resolved = List<String>.from(data['resolved'] ?? []);
-            // If user is a responder, show only those dispatches
-            if (responders.contains(userId)) {
-              return true;
-            }
-            // Otherwise, show if matches specialization, not declined, not resolved, and not already a responder
+            
+            // Show if matches specialization, not declined, not resolved, and not already a responder
             final matchesSpecialization = fields.any((field) => data[field] == true);
             return matchesSpecialization &&
                    !responders.contains(userId) &&
@@ -119,169 +129,158 @@ class _ERTDashboardScreenState extends State<ERTDashboardScreen> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final double containerWidth = _getResponsiveWidth(screenWidth);
-    final double reportingCardHeight = _getReportingCardHeight(screenWidth);
     return Scaffold(
       appBar: const DashboardAppBar(),
       drawer: DashboardDrawerLeft(onSelectScreen: _setScreen),
       endDrawer: DashboardDrawerRight(onSelectScreen: _setScreen),
       body: SafeArea(
-        child: LayoutBuilder(builder: (context, constraints) {
-          final maxWidth = constraints.maxWidth > 500 ? 400 : constraints.maxWidth * 0.95;
-
-          return SingleChildScrollView(
-            child: Center(
-              child: Container(
-                width: maxWidth.toDouble(),
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
+        child: Center(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double containerHeight = constraints.maxHeight * 0.9;
+              return Container(
+                width: screenWidth < 400 ? screenWidth * 0.98 : 360,
+                height: containerHeight,
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // 🟨 Title
-                    Center(
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 16),
                       child: RichText(
-                        text: const TextSpan(
+                        text: TextSpan(
                           children: [
                             TextSpan(
-                              text: 'Emergency ',
-                              style: TextStyle(
-                                  color: Colors.amber,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 24),
+                              text: (_specialization != null && _specialization!.toLowerCase() == 'medical') ? 'Medical ' : 'Emergency ',
+                              style: const TextStyle(
+                                color: Color(0xFFFEC00F),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 28,
+                              ),
                             ),
                             TextSpan(
                               text: 'Personnel',
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 24),
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 28,
+                              ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
-
-                    // 📋 Reports Section (now real-time)
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black, width: 1.5),
+                    // Reports Card
+                    Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
-                        color: Colors.white,
+                        side: const BorderSide(color: Colors.black, width: 1.5),
                       ),
+                      color: Colors.white,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.all(10),
-                            color: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                            decoration: const BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(8),
+                                topRight: Radius.circular(8),
+                              ),
+                            ),
                             child: const Text(
-                              "Reports",
+                              'Reports',
                               style: TextStyle(
-                                color: Colors.amber,
+                                color: Color(0xFFFEC00F),
                                 fontWeight: FontWeight.bold,
-                                fontSize: 18,
+                                fontSize: 20,
                               ),
                             ),
                           ),
                           SizedBox(
-                            height: 300,
+                            height: 350,
                             child: _specialization == null || _ertStatus == null
                                 ? const Center(child: CircularProgressIndicator())
                                 : (_ertStatus == 'Dispatched' || _ertStatus == 'Arrived') && _assignedDispatch != null
-                                    ? ListView(
-                                        children: [
-                                          if (_assignedDispatch != null && _assignedDispatch!['id'] != null)
-                                            ListTile(
-                                              leading: const Icon(Icons.location_on, color: Colors.amber),
-                                              title: Text("Location: "+(_assignedDispatch!['location'] ?? 'Unknown')),
-                                              subtitle: Text("Status: "+(_assignedDispatch!['status'] ?? 'Dispatched')+"\n"+(_assignedDispatch!['description'] ?? '')),
-                                              trailing: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  if (_assignedDispatch!['incident_type'] != null)
-                                                    Chip(
-                                                      label: Text(
-                                                        (_assignedDispatch!['incident_type'] as String).split(' ').join('\n'),
-                                                        style: const TextStyle(fontSize: 12),
-                                                        textAlign: TextAlign.center,
-                                                      ),
-                                                      backgroundColor: Colors.red,
-                                                      labelPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                    ),
-                                                  const SizedBox(width: 8),
-                                                  const Icon(Icons.arrow_forward_ios, size: 16),
-                                                ],
-                                              ),
-                                              onTap: () {
-                                                Navigator.of(context).push(
-                                                  MaterialPageRoute(
-                                                    builder: (context) => ERTDispatchDetailScreen(dispatch: _assignedDispatch!, dispatchId: _assignedDispatch!['id']),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                        ],
-                                      )
+                                    ? _buildReportRow(_assignedDispatch!)
                                     : StreamBuilder<List<Map<String, dynamic>>>(
                                         stream: _getRelevantDispatchesStream(_specialization!),
                                         builder: (context, snapshot) {
                                           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
                                           final dispatches = snapshot.data!;
                                           if (dispatches.isEmpty) {
-                                            return const Center(child: Text('No reports found.'));
+                                            return const Center(child: Text('No reports found.', style: TextStyle(fontSize: 16)));
                                           }
                                           return ListView.builder(
                                             itemCount: dispatches.length,
                                             itemBuilder: (context, index) {
                                               final dispatch = dispatches[index];
-                                              final dispatchId = dispatch['id'];
-                                              if (dispatchId == null) return SizedBox();
-                                              return ListTile(
-                                                leading: const Icon(Icons.location_on, color: Colors.amber),
-                                                title: Text("Location: "+(dispatch['location'] ?? 'Unknown')),
-                                                subtitle: Text("Status: "+(dispatch['status'] ?? 'Dispatched')+"\n"+(dispatch['description'] ?? '')),
-                                                trailing: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    if (dispatch['incident_type'] != null)
-                                                      Chip(
-                                                        label: Text(
-                                                          (dispatch['incident_type'] as String).split(' ').join('\n'),
-                                                          style: const TextStyle(fontSize: 12),
-                                                          textAlign: TextAlign.center,
-                                                        ),
-                                                        backgroundColor: Colors.red,
-                                                        labelPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                                                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                      ),
-                                                    const SizedBox(width: 8),
-                                                    const Icon(Icons.arrow_forward_ios, size: 16),
-                                                  ],
-                                                ),
-                                                onTap: () {
-                                                  Navigator.of(context).push(
-                                                    MaterialPageRoute(
-                                                      builder: (context) => ERTDispatchDetailScreen(dispatch: dispatch, dispatchId: dispatchId),
-                                                    ),
-                                                  );
-                                                },
-                                              );
+                                              return _buildReportRow(dispatch);
                                             },
                                           );
                                         },
                                       ),
-                          )
+                          ),
                         ],
                       ),
                     ),
+                    const SizedBox(height: 12),
                   ],
                 ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReportRow(Map<String, dynamic> dispatch) {
+    final dispatchId = dispatch['id'];
+    if (dispatchId == null) return const SizedBox();
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.black12, width: 1),
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+      ),
+      child: ListTile(
+        leading: const Icon(Icons.location_on, color: Color(0xFFFEC00F)),
+        title: Text(
+          'Location: ${dispatch['location'] ?? 'Unknown'}',
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        subtitle: Row(
+          children: [
+            if (dispatch['incident_type'] != null)
+              Container(
+                margin: const EdgeInsets.only(top: 8, right: 8),
+                child: Chip(
+                  label: Text(
+                    dispatch['incident_type'],
+                    style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  backgroundColor: Colors.red,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
+          ],
+        ),
+        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black, size: 20),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ERTDispatchDetailScreen(dispatch: dispatch, dispatchId: dispatchId),
             ),
           );
-        }),
+        },
       ),
     );
   }

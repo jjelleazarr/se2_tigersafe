@@ -4,6 +4,8 @@ import 'package:se2_tigersafe/screens/mobile/dashboard.dart';
 import 'package:se2_tigersafe/widgets/footer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:se2_tigersafe/widgets/dashboard_drawer_left.dart';
+import 'package:se2_tigersafe/widgets/dashboard_drawer_right.dart';
 
 class ReportsListScreen extends StatefulWidget {
   const ReportsListScreen({super.key});
@@ -35,31 +37,8 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () async {
-            final user = FirebaseAuth.instance.currentUser;
-            if (user != null) {
-              final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-              final roles = List<String>.from(doc['roles'] ?? []);
-              if (roles.contains('emergency_response_team')) {
-                Navigator.pushReplacementNamed(context, '/ert_dashboard');
-              } else {
-                Navigator.pushReplacementNamed(context, '/dashboard');
-              }
-            } else {
-              Navigator.pushReplacementNamed(context, '/dashboard');
-            }
-          },
-        ),
-        title: const Text(
-          'Reports',
-          style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
+      appBar: const DashboardAppBar(),
+      endDrawer: DashboardDrawerRight(onSelectScreen: (_) {}),
       body: Column(
         children: [
           Expanded(
