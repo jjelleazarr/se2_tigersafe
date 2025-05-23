@@ -265,165 +265,100 @@ class _AnnouncementBoardScreenState extends State<AnnouncementBoardScreen> {
         ? data['attachments'] as String
         : null;
 
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'Announcement ',
-                    style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 28),
-                  ),
-                  TextSpan(
-                    text: 'Details',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Basic Info Card
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: Colors.black, width: 1),
-            ),
-            color: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Basic Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('Title', data['title'] ?? ''),
-                  _buildInfoRow('Author', _resolvedAuthor ?? '…'),
-                  _buildInfoRow('Posted At', _fmt.format((data['timestamp'] as Timestamp).toDate())),
-                  _buildInfoRow('Priority', data['priority'] ?? 'Low', valueColor: _getPriorityColor(data['priority'] as String?)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Content Card
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: Colors.black, width: 1),
-            ),
-            color: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Content', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
-                  const SizedBox(height: 12),
-                  Text(
-                    data['content'] ?? '',
-                    style: const TextStyle(fontSize: 16, color: Colors.black87),
-                  ),
-                  _buildAttachmentPreview(data['attachments'] as String?),
-                ],
-              ),
-            ),
-          ),
-          const Spacer(),
-
-          // Action Buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (showActionButtons)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: InkWell(
-                    onTap: _toggleHidden,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          data['is_hidden'] == true ? Icons.visibility_off : Icons.visibility,
-                          color: Colors.blue,
-                          size: 16,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Container(
+            height: constraints.maxHeight,
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          data['is_hidden'] == true ? "Unhide " : "Hide ",
-                          style: const TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 16),
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Announcement ',
+                                style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 28),
+                              ),
+                              TextSpan(
+                                text: 'Details',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+                              ),
+                            ],
+                          ),
                         ),
-                        const Text(
-                          "Announcement",
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Basic Info Card
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: Colors.black, width: 1),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              if (showActionButtons)
-                const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: InkWell(
-                  onTap: _handleEdit,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.edit, color: Colors.blue, size: 16),
-                      SizedBox(width: 8),
-                      Text("Edit ", style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text("Announcement", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        color: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Basic Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                              const SizedBox(height: 16),
+                              _buildInfoRow('Title', data['title'] ?? ''),
+                              _buildInfoRow('Author', _resolvedAuthor ?? '…'),
+                              _buildInfoRow('Posted At', _fmt.format((data['timestamp'] as Timestamp).toDate())),
+                              _buildInfoRow('Priority', data['priority'] ?? 'Low', valueColor: _getPriorityColor(data['priority'] as String?)),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Content Card
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: Colors.black, width: 1),
+                        ),
+                        color: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Content', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                              const SizedBox(height: 12),
+                              Text(
+                                data['content'] ?? '',
+                                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                              ),
+                              _buildAttachmentPreview(data['attachments'] as String?),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: InkWell(
-                  onTap: _handleDelete,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.delete, color: Colors.red, size: 16),
-                      SizedBox(width: 8),
-                      Text("Delete ", style: TextStyle(color: Color(0xFFFEC00F), fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text("Announcement", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

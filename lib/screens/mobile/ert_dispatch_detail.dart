@@ -131,6 +131,16 @@ class _ERTDispatchDetailScreenState extends State<ERTDispatchDetailScreen> {
     setState(() => _loading = false);
   }
 
+  Future<void> _refreshDispatch() async {
+    final doc = await FirebaseFirestore.instance.collection('dispatches').doc(widget.dispatchId).get();
+    if (doc.exists) {
+      setState(() {
+        widget.dispatch.clear();
+        widget.dispatch.addAll(doc.data()!);
+      });
+    }
+  }
+
   void _showUpdateStatusDialog() {
     showDialog(
       context: context,
@@ -142,6 +152,7 @@ class _ERTDispatchDetailScreenState extends State<ERTDispatchDetailScreen> {
             onPressed: () async {
               Navigator.pop(context);
               await _updateERTStatus('Arrived');
+              await _refreshDispatch();
             },
           ),
           SimpleDialogOption(
@@ -149,6 +160,7 @@ class _ERTDispatchDetailScreenState extends State<ERTDispatchDetailScreen> {
             onPressed: () async {
               Navigator.pop(context);
               await _updateERTStatus('Resolved');
+              await _refreshDispatch();
               Navigator.pop(context); // Go back to dashboard
             },
           ),
@@ -421,22 +433,35 @@ class _ERTDispatchDetailScreenState extends State<ERTDispatchDetailScreen> {
                           Icons.update,
                         ),
                       ] else if (!isDeclined && !isResolved) ...[
-                        Row(
+                        Wrap(
+                          spacing: 16,
+                          runSpacing: 12,
                           children: [
-                            Expanded(
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width > 400
+                                  ? (MediaQuery.of(context).size.width - 56) / 2
+                                  : double.infinity,
                               child: _buildActionButton(
                                 "I'M ON THE WAY",
                                 Colors.black,
-                                _loading ? null : () async => await _updateERTStatus('Dispatched'),
+                                _loading ? null : () async {
+                                  await _updateERTStatus('Dispatched');
+                                  await _refreshDispatch();
+                                },
                                 Icons.directions_run,
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width > 400
+                                  ? (MediaQuery.of(context).size.width - 56) / 2
+                                  : double.infinity,
                               child: _buildActionButton(
                                 "Unable to Respond",
                                 Colors.red,
-                                _loading ? null : () async => await _updateERTStatus('Unable to Respond'),
+                                _loading ? null : () async {
+                                  await _updateERTStatus('Unable to Respond');
+                                  await _refreshDispatch();
+                                },
                                 Icons.cancel,
                               ),
                             ),
