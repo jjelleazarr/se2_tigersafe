@@ -19,8 +19,7 @@ class _LocationInputState extends State<LocationInput> {
 
   void _showPreview(double lat, double lng) {
     final staticMapUrl =
-        'https://maps.googleapis.com/maps/api/staticmap?center=$lat,$lng&zoom=16&size=600x300&maptype=roadmap'
-        '&markers=color:red%7Clabel:A%7C$lat,$lng&key=AIzaSyAZwpplCjcLReEDnwQGOA0Nruw9WqzPzJ8';
+        'INSERT API';
     setState(() => _previewImageUrl = staticMapUrl);
   }
 
